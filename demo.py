@@ -10,8 +10,14 @@ Provides a unified menu-driven interface to:
 """
 
 import os
-import subprocess
 import sys
+
+# Auto-detect and switch to .venv python if running in external/system python
+_venv_py = os.path.abspath(os.path.join(os.path.dirname(__file__), ".venv", "bin", "python"))
+if os.path.exists(_venv_py) and os.path.realpath(sys.executable) != os.path.realpath(_venv_py):
+    os.execv(_venv_py, [_venv_py] + sys.argv)
+
+import subprocess
 import threading
 import time
 

@@ -1,9 +1,17 @@
-"""Configuration loader with schema and threshold validation."""
-
 import os
+import sys
 from pathlib import Path
 from typing import Any, Dict
-import yaml
+
+try:
+    import yaml
+except ImportError:
+    import glob
+    _v_paths = glob.glob(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".venv", "lib", "python*", "site-packages")))
+    for _p in _v_paths:
+        if _p not in sys.path:
+            sys.path.insert(0, _p)
+    import yaml
 
 
 class ConfigError(ValueError):
