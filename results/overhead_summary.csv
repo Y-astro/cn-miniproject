@@ -1,0 +1,3 @@
+report_type,payload_bytes,wire_bytes,kbps_at_1s_interval,kbps_at_0.5s_interval
+HEALTH,378,420,3.36,6.72
+HEARTBEAT,106,148,1.184,2.368

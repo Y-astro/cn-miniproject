@@ -1,0 +1,12 @@
+# Project dependencies
+# Remote System Health Monitoring (UDP + SDN)
+psutil>=5.9.0
+pyyaml>=6.0.0
+pytest>=7.0.0
+pytest-cov>=4.0.0
+matplotlib>=3.5.0
+pandas>=1.5.0
+eventlet<=0.33.3
+dnspython>=2.0.0
+mininet>=2.3.0
+ryu>=4.34; python_version < "3.11"

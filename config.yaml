@@ -1,0 +1,60 @@
+# Remote System Health Monitoring Configuration
+server:
+  host: "0.0.0.0"
+  port: 5005
+  buffer_size: 2048
+  csv_file: "results/server_reports.csv"
+  dashboard_interval: 2.0
+  failure_timeout_multiplier: 3.0  # 3 * agent interval
+  max_delay_clamp_ms: 10000.0      # clamp clock drift anomalies
+
+agent:
+  default_server: "127.0.0.1"
+  default_port: 5005
+  default_interval: 1.0
+  mode: "real"
+  # IP TOS / DSCP markings
+  # DSCP 46 (Expedited Forwarding - EF) -> TOS 0xB8 (184 in decimal)
+  tos_critical: 0xB8
+  # DSCP 0 (Best Effort - CS0) -> TOS 0x00
+  tos_normal: 0x00
+  dscp_critical: 46
+  dscp_normal: 0
+
+thresholds:
+  cpu_percent:
+    warning: 70.0
+    critical: 90.0
+  mem_percent:
+    warning: 75.0
+    critical: 90.0
+  process_count:
+    warning: 300
+    critical: 500
+  packet_loss_percent:
+    warning: 5.0
+    critical: 20.0
+  silence_multiplier: 3.0
+
+alerts:
+  cooldown_seconds: 5.0
+  hysteresis_percent: 2.0  # Alert clears when value < threshold - hysteresis
+
+sdn:
+  controller_ip: "127.0.0.1"
+  controller_port: 6633
+  switch_name: "s1"
+  server_ip: "10.0.0.100"
+  udp_port: 5005
+  dscp_critical: 46
+  priority_enabled: true
+  bottleneck_bandwidth_mbps: 10.0
+  stats_poll_interval: 2.0
+  high_utilization_threshold: 0.80
+  flow_stats_file: "results/sdn_flow_stats.csv"
+
+logging:
+  level: "INFO"
+  log_file: "results/health_monitor.log"
+  rate_limit_sec: 1.0
+  rate_limit_burst: 5

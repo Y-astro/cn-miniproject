@@ -1,0 +1,3 @@
+alert_id,node_id,metric,value,threshold,severity,trigger_ts,detect_ts,alert_latency_ms
+silence_h_partial,h_partial,node_silence,3.4,3.0,CRITICAL,1791281886.905197,1791281886.905197,0.0
+f582e5c4,h_partial,packet_loss_percent,80.0,20.0,CRITICAL,1791281886.9054348,1791281886.9056995,0.26

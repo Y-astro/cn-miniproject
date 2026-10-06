@@ -1,0 +1,16 @@
+repetition,failure_type,ttd_sec,ttr_sec
+1,agent_crash,1.052,0.048
+1,link_failure,3.304,0.02
+1,partial_loss,3.305,0.02
+2,agent_crash,1.051,0.047
+2,link_failure,3.304,0.02
+2,partial_loss,3.353,0.02
+3,agent_crash,1.052,0.047
+3,link_failure,3.304,0.02
+3,partial_loss,3.306,0.02
+4,agent_crash,1.052,0.047
+4,link_failure,3.303,0.02
+4,partial_loss,3.306,0.02
+5,agent_crash,1.152,0.047
+5,link_failure,3.304,0.02
+5,partial_loss,3.304,0.02
