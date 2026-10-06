@@ -33,10 +33,13 @@ class MonitorServer:
         csv_file: Optional[str] = None,
         alerts_csv_file: Optional[str] = None,
         dashboard_interval: float = 2.0,
+        web_port: Optional[int] = None,
     ):
         self.host = host
         self.port = int(port)
         self.dashboard_interval = dashboard_interval
+        self.web_port = web_port
+        self._httpd = None
 
         # Load and validate config
         self.config = load_config(config_path) if os.path.isfile(config_path) else {}
@@ -234,6 +237,13 @@ class MonitorServer:
         self.running = True
         self.logger.info("MonitorServer loop running. Press Ctrl+C to stop.")
 
+        if self.web_port:
+            try:
+                from server.web_dashboard import run_web_dashboard
+                self._httpd = run_web_dashboard(self, http_port=self.web_port)
+            except Exception as exc:
+                self.logger.warning(f"Failed to launch web dashboard: {exc}")
+
         last_dashboard_time = time.monotonic()
         last_liveness_check = time.monotonic()
 
@@ -279,6 +289,14 @@ class MonitorServer:
     def stop(self) -> None:
         """Stops server, closes socket, and flushes CSV files."""
         self.running = False
+        if self._httpd:
+            try:
+                self._httpd.shutdown()
+                self._httpd.server_close()
+            except Exception:
+                pass
+            self._httpd = None
+
         if self.sock:
             try:
                 self.sock.close()
@@ -310,6 +328,7 @@ def parse_args():
     parser.add_argument("--config", default="config.yaml", help="Configuration file path")
     parser.add_argument("--csv", default=None, help="Output CSV path for reports")
     parser.add_argument("--dashboard-interval", type=float, default=2.0, help="Interval for console dashboard (0 to disable)")
+    parser.add_argument("--web-port", type=int, default=None, help="Port to serve real-time web dashboard (e.g. 8080)")
     return parser.parse_args()
 
 
@@ -325,6 +344,7 @@ def main():
         config_path=args.config,
         csv_file=args.csv,
         dashboard_interval=args.dashboard_interval,
+        web_port=args.web_port,
     )
 
     def handle_signal(sig, frame):
