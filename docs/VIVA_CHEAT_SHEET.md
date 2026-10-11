@@ -1,5 +1,10 @@
 # Viva Defense & Quick-Reference Cheat Sheet
 ### Project No. 11: Remote System Health Monitoring (UDP + SDN)
+**Team Members & Roles:**
+- **Member 1 (`PES2UG25CS609`):** Architecture & Protocol Lead (Slides 1, 2, 3)
+- **Member 2 (`PES2UG25CS642` / Y-astro):** Core Systems & SDN Technical Lead (Slides 4, 5 + Live Demo)
+- **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Slides 6, 7, 8)
+**Presentation Slides:** [`data/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pdf)
 
 Keep this cheat sheet handy during your project evaluation and viva.
 

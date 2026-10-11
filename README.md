@@ -7,6 +7,18 @@
 
 A distributed, low-latency remote system health monitoring application that couples a custom **UDP telemetry protocol** with an **OpenFlow 1.3 SDN controller (Ryu + Open vSwitch)** to guarantee delivery and strict priority for critical monitoring traffic over congested network bottlenecks.
 
+### Team Members & SRNs
+- **Member 1 (`PES2UG25CS609`):** Architecture & Protocol Lead (Problem Context, UDP Protocol Design, Agent Sampling & DSCP Marking)
+- **Member 2 (`PES2UG25CS642` / Y-astro):** Core Systems & SDN Technical Lead (Server Non-Blocking I/O, Alert Engine & Hysteresis, OpenFlow 1.3 QoS, Live Demo)
+- **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Failure Detection & Silence, Empirical Benchmarks & Graphs, Automated Tests & Conclusions)
+
+### Presentation & Defense Materials
+- **Presentation Deck (PDF):** [`data/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pdf) (Mirror: [`docs/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pdf))
+- **Presentation Deck (PPTX):** [`data/Remote-System-Health-Monitoring.pptx`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pptx) (Mirror: [`docs/Remote-System-Health-Monitoring.pptx`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pptx))
+- **3-Member Presentation & Viva Guide:** [`docs/PROJECT_GUIDE_AND_PRESENTATION.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/PROJECT_GUIDE_AND_PRESENTATION.md)
+- **Viva Rapid-Fire Cheat Sheet:** [`docs/VIVA_CHEAT_SHEET.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/VIVA_CHEAT_SHEET.md)
+- **Comprehensive Technical Report:** [`docs/report.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/report.md)
+
 ---
 
 ## 1. Project Overview
@@ -56,8 +68,15 @@ project11_health_monitor/
 │   ├── test_robustness.py      # Negative and robustness tests (N1 - N4)
 │   └── test_integration.py     # End-to-end integration tests (I1 - I7)
 ├── results/                    # CSV datasets, summary files, and plots
+├── data/                       # Presentation slide decks (PDF & PPTX)
+│   ├── Remote-System-Health-Monitoring.pdf
+│   └── Remote-System-Health-Monitoring.pptx
 └── docs/
-    └── report.md               # Final comprehensive technical report
+    ├── report.md                         # Final comprehensive technical report
+    ├── PROJECT_GUIDE_AND_PRESENTATION.md # 3-Member Presentation & Viva guide
+    ├── VIVA_CHEAT_SHEET.md               # Quick-reference viva rapid-fire cheat sheet
+    ├── Remote-System-Health-Monitoring.pdf # Presentation slides (PDF)
+    └── Remote-System-Health-Monitoring.pptx # Presentation slides (PPTX)
 ```
 
 ---
