@@ -13,6 +13,7 @@ A distributed, low-latency remote system health monitoring application that coup
 - **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Failure Detection, Empirical Benchmarks & Graphs, Automated Tests & Conclusions — Slides 6, 7, 8)
 
 ### Presentation & Defense Materials
+- **Deliverable 1 (D1) Prep Guide:** [`docs/D1_DELIVERABLE_GUIDE.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/D1_DELIVERABLE_GUIDE.md)
 - **Presentation Deck (PDF):** [`data/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pdf) (Mirror: [`docs/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pdf))
 - **Presentation Deck (PPTX):** [`data/Remote-System-Health-Monitoring.pptx`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pptx) (Mirror: [`docs/Remote-System-Health-Monitoring.pptx`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pptx))
 - **3-Member Presentation & Viva Guide:** [`docs/PROJECT_GUIDE_AND_PRESENTATION.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/PROJECT_GUIDE_AND_PRESENTATION.md)
