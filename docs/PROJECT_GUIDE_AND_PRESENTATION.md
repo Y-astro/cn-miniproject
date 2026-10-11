@@ -3,9 +3,9 @@
 
 **Project No. 11 — Computer Networks & Software-Defined Networking**  
 **Team Members & SRNs:**  
-- **Member 1 (`PES2UG25CS609`):** Architecture & Protocol Lead (Problem Context, UDP Protocol Design, Agent Sampling & DSCP Marking)  
-- **Member 2 (`PES2UG25CS642` / Y-astro):** Core Systems & SDN Technical Lead (Server Non-Blocking I/O, Alert Engine & Hysteresis, OpenFlow 1.3 QoS, Live Demo)  
-- **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Failure Detection & Silence, Empirical Benchmarks & Graphs, Automated Tests & Conclusions)  
+- **Member 1 (`PES2UG25CS642`):** Architecture & Protocol Lead (Problem Context, UDP Protocol Design & 3-Step Pipeline — Slides 1, 2)  
+- **Member 2 (`PES2UG25CS609` / Y-astro - Lead):** Core Systems & SDN Technical Lead (Agent Sampling & DSCP 46, Server Select Loop, Alert Engine, OpenFlow 1.3 QoS, Live Demo — Slides 3, 4, 5)  
+- **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Failure Detection & Silence, Empirical Benchmarks & Graphs, Automated Tests & Conclusions — Slides 6, 7, 8)  
 
 **Repository:** [https://github.com/Y-astro/cn-miniproject.git](https://github.com/Y-astro/cn-miniproject.git)  
 **Presentation Slides:**
@@ -309,12 +309,12 @@ This guide is designed for our **3-member team** presenting Project No. 11. It d
 
 ## 5.1 Team Division of Responsibilities & Role Matrix
 
-To ensure a balanced academic presentation where the **Technical Lead (Member 2)** handles the core systems and SDN networking, while **Member 1** and **Member 3** deliver strong foundations and rigorous empirical proof:
+To ensure a balanced academic presentation where the **Technical Lead (Member 2: `PES2UG25CS609`)** handles the core systems, agent sampling, and SDN networking, while **Member 1 (`PES2UG25CS642`)** and **Member 3 (`PES2UG25CS620`)** deliver strong foundations and rigorous empirical proof:
 
 | Member & SRN | Role in Project | Assigned Slides | Primary Topics & Technical Focus | Live Demo Responsibility |
 |---|---|---|---|---|
-| **Member 1**<br>`PES2UG25CS609` | **Architecture & Protocol Lead** | **Slides 1, 2, 3** | • Problem Context: TCP head-of-line blocking vs. naive UDP loss<br>• Protocol Architecture: Compact JSON & MTU $\le 1400$B guard<br>• Agent Design: `psutil` sampling, timer drift avoidance, heartbeat fallback, and IP TOS/DSCP socket marking | Introduces the team, sets up the problem context, and explains agent startup. |
-| **Member 2**<br>`PES2UG25CS642`<br>*(Technical Lead)* | **Core Systems & SDN Lead** | **Slides 4, 5** | • Server Select Loop: Non-blocking POSIX I/O multiplexing<br>• Telemetry & Alerts: One-way delay, hysteresis deadband (2%) & cooldown (5s)<br>• SDN OpenFlow 1.3: Flow tables, DSCP 46 matching, and OVS HTB QoS queueing | **Operates the Terminal:** Runs the 60-test pytest suite, launches server/agents, triggers CPU spikes, and demonstrates SDN QoS queues. |
+| **Member 1**<br>`PES2UG25CS642` | **Architecture & Protocol Lead** | **Slides 1, 2** | • Problem Context: TCP head-of-line blocking vs. naive UDP loss<br>• Protocol Architecture: 3-step pipeline, compact JSON & MTU $\le 1400$B guard | Introduces the team, sets up the problem context, and explains protocol schema. |
+| **Member 2**<br>`PES2UG25CS609`<br>*(You / Technical Lead)* | **Core Systems & SDN Lead** | **Slides 3, 4, 5** | • Agent Sampling & DSCP: `psutil` sampling, monotonic timer drift avoidance, heartbeat fallback, and IP TOS socket marking (`0xB8` for DSCP 46)<br>• Server Select Loop: Non-blocking POSIX I/O multiplexing<br>• Telemetry & Alerts: One-way delay, hysteresis deadband (2%) & cooldown (5s)<br>• SDN OpenFlow 1.3: Flow tables, DSCP 46 matching, and OVS HTB QoS queueing | **Operates the Terminal:** Runs the 60-test pytest suite, launches server/agents, triggers CPU spikes, and demonstrates SDN QoS queues. |
 | **Member 3**<br>`PES2UG25CS620` | **Reliability & Evaluation Lead** | **Slides 6, 7, 8** | • Failure Detection: Sequence gaps, silence timeout ($3 \times \text{interval}$), crash vs link cut disambiguation<br>• Empirical Benchmarks: Congestion (56.7% vs 0% loss), Latency CDF (<1ms), Scalability (80 nodes)<br>• Conclusions: Test rigor (60 tests, 87% coverage) & final takeaways | Explains failure detection and interprets experimental benchmark charts during the demo. |
 
 ---
@@ -324,7 +324,7 @@ To ensure a balanced academic presentation where the **Technical Lead (Member 2)
 ---
 
 ### Slide 1: Remote System Health Monitoring (Title & Motivation)
-**Speaker: Member 1 (`PES2UG25CS609`)**
+**Speaker: Member 1 (`PES2UG25CS642`)**
 
 * **Visual on Screen:** Title slide showing project name, subtitle ("A lightweight path from local readings to protected alerts"), and the 3 team SRNs (`PES2UG25CS609`, `PES2UG25CS620`, `PES2UG25CS642`).
 * **Key Talking Points:**
@@ -341,7 +341,7 @@ To ensure a balanced academic presentation where the **Technical Lead (Member 2)
 ---
 
 ### Slide 2: How It Works — Lightweight Datagrams & Strict Protocol
-**Speaker: Member 1 (`PES2UG25CS609`)**
+**Speaker: Member 1 (`PES2UG25CS642`)**
 
 * **Visual on Screen:** 3-step pipeline (`01 Collect local data`, `02 Keep each report small`, `03 Prioritize alerts`), Packet Rules box (`common/protocol.py`), and CSV evidence sample (`server_reports.csv`).
 * **Key Talking Points:**
@@ -352,12 +352,18 @@ To ensure a balanced academic presentation where the **Technical Lead (Member 2)
 * **Verbatim Script:**
   > *"Moving to Slide 2: How the system works end-to-end. Our architecture operates as a streamlined three-step pipeline:*  
   > *First, agents continuously collect host metrics. Second, we serialize telemetry into strict, compact JSON datagrams. Crucially, in `common/protocol.py`, we enforce an MTU guard of 1400 bytes. Since standard Ethernet MTU is 1500 bytes, this guard ensures that no telemetry packet will ever undergo IP fragmentation, completely avoiding reassembly overhead and fragment drops.*  
-  > *Third, when a threshold violation occurs, the agent tags the packet so the SDN switch can steer it to a protected queue. Furthermore, every packet received by the server is logged into append-only CSV files, providing audit evidence for every single transmission."*
+  > *Third, when a threshold violation occurs, the agent tags the packet so the SDN switch can steer it to a protected queue. Furthermore, every packet received by the server is logged into append-only CSV files, providing audit evidence for every single transmission.*  
+  > *To explain our agent metric sampling, server decision loop, and how our OpenFlow controller enforces Quality of Service, I will now hand over to **Member 2 (`PES2UG25CS609`)**, our Core Systems and SDN Technical Lead."*
+
+---
+
+### 🔄 Transition to Member 2:
+> **Member 1 says:** *"I will now hand over to Member 2 (`PES2UG25CS609`), who led the technical implementation of our agent sampling, our non-blocking server architecture, and the OpenFlow SDN QoS framework."*
 
 ---
 
 ### Slide 3: Agent Design · Local Sampling
-**Speaker: Member 1 (`PES2UG25CS609`)**
+**Speaker: Member 2 (`PES2UG25CS609` / Technical Lead — You)**
 
 * **Visual on Screen:** Agent design cards (Report fields, Heartbeat fallback, Message wire size), DSCP / TOS Marking code snippet, and `stats_collector.py` simulation modes.
 * **Key Talking Points:**
@@ -367,20 +373,15 @@ To ensure a balanced academic presentation where the **Technical Lead (Member 2)
   4. **IP TOS / DSCP Marking:** Uses `sock.setsockopt(socket.IPPROTO_IP, socket.IP_TOS, 0xB8)` to mark DSCP 46 (Expedited Forwarding).
   5. **Deterministic Simulation Modes:** Supports `spike`, `ramp-up`, and `normal` modes for reproducible testing.
 * **Verbatim Script:**
-  > *"On Slide 3, we look at agent engineering. Our agent uses `psutil` to sample CPU, memory, active process counts, top memory consumers, and network I/O. Each report has a wire size of only 420 bytes, consuming a negligible 3.36 kbps of bandwidth per agent at 1-second intervals.*  
-  > *To ensure rock-solid reliability, the agent uses monotonic clock timing to prevent scheduling drift. If local hardware sampling encounters an exception, the agent falls back to transmitting a lightweight `HEARTBEAT` packet, ensuring the node is never prematurely flagged as offline.*  
-  > *Crucially, when metrics exceed critical thresholds, the agent invokes `setsockopt` with IP Type of Service `0xB8`. This writes DSCP 46—Expedited Forwarding—directly into the outer IPv4 header.*  
-  > *To explain how our central server processes these datagrams and how our OpenFlow controller enforces Quality of Service, I will now hand over to **Member 2 (`PES2UG25CS642`)**, our Core Systems and SDN Lead."*
-
----
-
-### 🔄 Transition to Member 2:
-> **Member 1 says:** *"I will now hand over to Member 2 (`PES2UG25CS642`), who led the technical implementation of our non-blocking server architecture and the OpenFlow SDN QoS framework."*
+  > *"Thank you. On Slide 3, we look at agent engineering and local metric collection.*  
+  > *Our agent uses `psutil` to sample CPU, memory, active process counts, top memory consumers, and network I/O. Each report has a wire size of only 420 bytes, consuming a negligible 3.36 kbps of bandwidth per agent at 1-second intervals.*  
+  > *To ensure rock-solid reliability, the agent uses monotonic clock timing (`time.monotonic()`) to prevent scheduling drift. If local hardware sampling encounters an exception, the agent falls back to transmitting a lightweight `HEARTBEAT` packet, ensuring the node is never prematurely flagged as offline.*  
+  > *Crucially, when metrics exceed critical thresholds, the agent invokes `setsockopt` with IP Type of Service `0xB8`. This writes DSCP 46—Expedited Forwarding—directly into the outer IPv4 header so the network hardware can act on it."*
 
 ---
 
 ### Slide 4: Server Decision Loop · Receive, Check, Alert
-**Speaker: Member 2 (`PES2UG25CS642` / Technical Lead)**
+**Speaker: Member 2 (`PES2UG25CS609` / Technical Lead — You)**
 
 * **Visual on Screen:** Non-blocking `select` loop diagram, delay calculation with clock jump clamping, append-only CSV evidence, and multi-metric alert thresholds.
 * **Key Talking Points:**
@@ -391,7 +392,7 @@ To ensure a balanced academic presentation where the **Technical Lead (Member 2)
      - **2% Hysteresis Deadband:** Prevents alert flapping at threshold boundaries (e.g., oscillating around 70%).
      - **5.0s Cooldown:** Suppresses duplicate alert storms during sustained degradation.
 * **Verbatim Script:**
-  > *"Thank you. On Slide 4, we examine the server's non-blocking decision engine.*  
+  > *"Moving to Slide 4, we examine the server's non-blocking decision engine.*  
   > *Rather than spawning a separate thread per client—which wastes memory and incurs heavy OS context switching—our server multiplexes all incoming telemetry through a single non-blocking UDP socket using the POSIX `select` system call. This allows a single event loop to handle hundreds of packets per second while utilizing under 5% CPU.*  
   > *When a packet arrives, the server immediately timestamps it and computes one-way transmission delay. In production clusters, clock skew can occasionally produce negative values, so our engine includes bounds checking to clamp any anomaly to 0.0 ms.*  
   > *Incoming vitals pass into our `AlertEngine`. In real-world networks, a metric hovering right at 70% can cause 'alert flapping'—firing and clearing every second. To eliminate this, we implemented a 2% hysteresis deadband: an alert triggers at 70%, but only clears when the metric drops strictly below 68%. Combined with a 5-second cooldown timer, this completely prevents log flooding."*
@@ -399,7 +400,7 @@ To ensure a balanced academic presentation where the **Technical Lead (Member 2)
 ---
 
 ### Slide 5: Quality of Service · Keeping Critical Packets Moving
-**Speaker: Member 2 (`PES2UG25CS642` / Technical Lead)**
+**Speaker: Member 2 (`PES2UG25CS609` / Technical Lead — You)**
 
 * **Visual on Screen:** OpenFlow 1.3 match-action architecture table, DSCP 46 packet tagging, and OVS HTB Queue bandwidth reservations (Queue 2: 5M, Queue 1: 3M, Queue 0: 1M on a 10 Mbps bottleneck).
 * **Key Talking Points:**
@@ -414,14 +415,14 @@ To ensure a balanced academic presentation where the **Technical Lead (Member 2)
   3. **Dynamic Congestion Polling:** A Ryu green thread queries port statistics every 2 seconds via `OFPPortStatsRequest`; if link utilization exceeds 80% (8 Mbps), it logs congestion alerts.
 * **Verbatim Script:**
   > *"Moving to Slide 5: Quality of Service and SDN traffic engineering.*  
-  > *The core innovation of our project is using OpenFlow 1.3 to enforce deterministic QoS without inspecting application payloads. As Member 1 explained, the agent tags critical packets with DSCP 46. At the switch level, our centralized Ryu SDN controller installs proactive flow rules:*  
+  > *The core innovation of our project is using OpenFlow 1.3 to enforce deterministic QoS without inspecting application payloads. As we saw, the agent tags critical packets with DSCP 46. At the switch level, our centralized Ryu SDN controller installs proactive flow rules:*  
   > *Rule Priority 100 matches IPv4 UDP packets on destination port 5005 with `ip_dscp=46`, applying the action `OFPActionSetQueue(2)`. Rule Priority 50 steers normal DSCP 0 reports into Queue 1, while Priority 10 dumps all background bulk traffic into Queue 0.*  
   > *In the underlying data plane, we configure Open vSwitch with Linux Hierarchical Token Bucket (HTB) queues across our 10 Mbps bottleneck link. Queue 2 has a guaranteed 5 Mbps min-rate reserved exclusively for critical alerts. When background traffic saturates the link, Queue 0 packets are dropped by the kernel, while our critical Queue 2 flows through untouched.*  
   > *Now, I will conduct a quick live demonstration of our test suite and running server before Member 3 presents our failure detection and benchmark results."*
 
 ---
 
-### 🖥️ Live Demonstration Interlude (Led by Member 2):
+### 🖥️ Live Demonstration Interlude (Led by Member 2: `PES2UG25CS609` / You):
 1. **Show automated tests:** Run `pytest tests/ -v` (point out: *"60 tests passed with 87% coverage"*).
 2. **Launch Server & Agent:** Run `python3 server/monitor_server.py --port 5005` in Terminal 1, and `python3 agent/health_agent.py --id h1 --server 127.0.0.1 --port 5005 --mode real` in Terminal 2. Show live ASCII dashboard refreshing.
 3. **Trigger Critical Spike:** Run `python3 agent/health_agent.py --id h2 --server 127.0.0.1 --port 5005 --mode simulated --sim-pattern spike` in Terminal 3. Point out: *"Notice that h2 triggers `[ALERT] [CRITICAL]` in sub-millisecond time with DSCP 46 tagging."*
@@ -499,24 +500,24 @@ During the live evaluation, execute this seamless 5-step sequence:
 +---------------------------------------------------------------------------------------+
 |                                LIVE DEMO COORDINATION                                 |
 +---------------------------------------------------------------------------------------+
-| Step 1: Proof of Rigor       | Member 2 runs `pytest tests/ -v`                       |
-|                              | Member 1 explains test suite breadth & 87% coverage    |
+| Step 1: Proof of Rigor       | Member 2 (609) runs `pytest tests/ -v`                 |
+|                              | Member 1 (642) explains test suite breadth & 87% cov   |
 +------------------------------+--------------------------------------------------------+
-| Step 2: Live Ingestion       | Member 2 launches `monitor_server.py` & agent `h1`     |
-|                              | Member 2 explains ASCII table & select multiplexing    |
+| Step 2: Live Ingestion       | Member 2 (609) launches `monitor_server.py` & agent h1 |
+|                              | Member 2 (609) explains ASCII table & select loop      |
 +------------------------------+--------------------------------------------------------+
-| Step 3: Critical Spike Alert | Member 2 launches agent `h2` with `--sim-pattern spike`|
-|                              | Member 2 highlights DSCP 46 & sub-ms alert latency     |
+| Step 3: Critical Spike Alert | Member 2 (609) launches agent h2 with spike pattern    |
+|                              | Member 2 (609) highlights DSCP 46 & sub-ms latency     |
 +------------------------------+--------------------------------------------------------+
-| Step 4: Failure Detection    | Member 2 kills `h1` (`Ctrl+C`); restarts after 4s      |
-|                              | Member 3 explains 3s silence timeout & recovery log    |
+| Step 4: Failure Detection    | Member 2 (609) kills h1 (Ctrl+C); restarts after 4s    |
+|                              | Member 3 (620) explains 3s silence timeout & recovery  |
 +------------------------------+--------------------------------------------------------+
-| Step 5: Benchmark Graphs     | Member 3 opens `results/congestion_comparison.png`     |
-|                              | Member 3 quotes 56.67% vs 0% loss & 95.2% delay cut    |
+| Step 5: Benchmark Graphs     | Member 3 (620) opens results/congestion_comparison.png |
+|                              | Member 3 (620) quotes 56.67% vs 0% loss & 95.2% delay  |
 +---------------------------------------------------------------------------------------+
 ```
 
-### Exact Commands for Terminal Operator (Member 2):
+### Exact Commands for Terminal Operator (Member 2: `PES2UG25CS609` / You):
 ```bash
 # Step 1: Run complete automated test suite
 pytest tests/ -v --cov=common --cov=server --cov=agent
@@ -540,7 +541,7 @@ xdg-open results/congestion_comparison.png
 
 Each member should master the questions aligned with their project domain:
 
-### Domain 1: Transport, Protocol & Agent Telemetry (Assigned to Member 1: `PES2UG25CS609`)
+### Domain 1: Transport & Protocol Architecture (Assigned to Member 1: `PES2UG25CS642`)
 
 #### Q1: Why did you choose UDP instead of TCP or WebSockets for health monitoring?
 > **Member 1 Answer:**  
@@ -552,10 +553,9 @@ Each member should master the questions aligned with their project domain:
 > *"Standard Ethernet frames have a Maximum Transmission Unit (MTU) of 1500 bytes. Subtracting the 20-byte IPv4 header and the 8-byte UDP header leaves an absolute maximum payload of 1472 bytes.  
 > If a UDP datagram exceeds 1472 bytes, the IP layer fragments it into multiple IP packets. If even one fragment is lost, the entire datagram is dropped. Limiting our serialized JSON payload to 1400 bytes leaves a 72-byte safety margin for optional IP options or VLAN tags, guaranteeing that our packets are never fragmented."*
 
-#### Q3: How do you prevent timer drift on long-running monitoring agents?
+#### Q3: How do validation and strict JSON schemas prevent packet corruption?
 > **Member 1 Answer:**  
-> *"Naive monitoring scripts use `time.sleep(interval)`, which causes cumulative timing drift because the code execution time (reading CPU, serializing JSON, network send) adds to the sleep duration.  
-> In `health_agent.py`, we use monotonic clock scheduling (`time.monotonic()`). We record a fixed target next-run timestamp (`next_tick = start_time + tick * interval`) and dynamically sleep only for `max(0, next_tick - time.monotonic())`. This guarantees a consistent 1.0 Hz reporting cadence without drift."*
+> *"In `common/protocol.py`, we implement a strict schema validation function `validate()`. Every packet must contain the required envelope fields (`version`, `type`, `node_id`, `seq`, `sent_ts`, `interval`, `priority`, and `metrics`). Furthermore, we enforce strict boundary invariants: CPU and RAM must be between 0 and 100, process counts must be non-negative, and timestamps must be valid numbers. Any malformed packet immediately raises a `ProtocolError` and is discarded by the server without crashing."*
 
 #### Q4: What happens if an agent fails to read hardware metrics via `psutil`?
 > **Member 1 Answer:**  
@@ -563,20 +563,25 @@ Each member should master the questions aligned with their project domain:
 
 ---
 
-### Domain 2: Core Server Engine, Hysteresis & OpenFlow SDN QoS (Assigned to Member 2: `PES2UG25CS642` / Technical Lead)
+### Domain 2: Core Systems, Agent/Server Engine & OpenFlow SDN QoS (Assigned to Member 2: `PES2UG25CS609` / Technical Lead — You)
 
-#### Q5: Why use POSIX `select` multiplexing instead of multi-threading or `asyncio`?
+#### Q5: How do you prevent timer drift on long-running monitoring agents?
+> **Member 2 Answer:**  
+> *"Naive monitoring scripts use `time.sleep(interval)`, which causes cumulative timing drift because the code execution time (reading CPU, serializing JSON, network send) adds to the sleep duration.  
+> In `health_agent.py`, we use monotonic clock scheduling (`time.monotonic()`). We record a fixed target next-run timestamp (`next_tick = start_time + tick * interval`) and dynamically sleep only for `max(0, next_tick - time.monotonic())`. This guarantees a consistent 1.0 Hz reporting cadence without drift."*
+
+#### Q6: Why use POSIX `select` multiplexing instead of multi-threading or `asyncio`?
 > **Member 2 Answer:**  
 > *"A thread-per-client or thread-per-packet model incurs substantial OS kernel thread-scheduling overhead, memory consumption for thread stacks (typically 8MB per thread by default), and synchronization locks. In UDP monitoring, datagrams arrive sporadically and handle fast processing.  
 > By using POSIX `select.select()` on a single non-blocking UDP socket, a single thread can inspect readiness and drain the receive buffer immediately. Our scalability benchmarks prove this architecture handles 80 nodes transmitting 184 packets per second with under 5% server CPU utilization."*
 
-#### Q6: UDP headers do not have a priority field. How does Open vSwitch know which packet is critical?
+#### Q7: UDP headers do not have a priority field. How does Open vSwitch know which packet is critical?
 > **Member 2 Answer:**  
 > *"We classify packets at Layer 3 using the **IPv4 Type of Service (TOS) / DSCP (Differentiated Services Code Point)** header field.  
 > When our agent evaluates that a metric crosses a critical threshold, it calls `sock.setsockopt(socket.IPPROTO_IP, socket.IP_TOS, 0xB8)`. DSCP occupies the 6 most significant bits of the TOS byte; binary `10111000` is decimal 184 (`0xB8`), which represents **DSCP 46 (Expedited Forwarding - EF)**.  
 > OpenFlow 1.3 natively supports the `ip_dscp` match field. The switch matches `eth_type=0x0800, ip_proto=17, udp_dst=5005, ip_dscp=46` at wire speed without inspecting application payloads, and applies `OFPActionSetQueue(2)`."*
 
-#### Q7: How does OpenFlow `set_queue` translate into physical bandwidth guarantees on Linux?
+#### Q8: How does OpenFlow `set_queue` translate into physical bandwidth guarantees on Linux?
 > **Member 2 Answer:**  
 > *"OpenFlow standardizes the `set_queue` action, but the physical queue scheduling is executed by the Linux kernel's **Hierarchical Token Bucket (HTB)** traffic control (`tc`) subsystem.  
 > In `sdn/topology.py`, we configure Open vSwitch port `s1-eth1` with three HTB classes:  
@@ -585,12 +590,12 @@ Each member should master the questions aligned with their project domain:
 > - Queue 0 (Best-Effort) has a minimum guaranteed rate of 1 Mbps.  
 > Under network congestion, HTB guarantees Queue 2 its 5 Mbps token allocation, dropping lower-priority packets in Queue 0 when intermediate ring buffers fill up."*
 
-#### Q8: What is alert hysteresis and cooldown, and why are they necessary?
+#### Q9: What is alert hysteresis and cooldown, and why are they necessary?
 > **Member 2 Answer:**  
 > *"In monitoring systems, **alert flapping** occurs when a fluctuating metric hovers around a static threshold. For example, if CPU oscillates between 69.9% and 70.1% around a 70% threshold, a naive system emits alarms and clears alarms continuously every second.  
 > In `server/alert_engine.py`, we implemented a **2% hysteresis deadband**: an alert triggers when CPU $\ge 70\%$, but clears only when CPU drops strictly below $70\% - 2\% = 68\%$. Additionally, our 5.0-second cooldown suppresses duplicate alerts for the same condition, ensuring clear and actionable incident logging."*
 
-#### Q9: How do you measure one-way delay accurately if clocks might not be synchronized?
+#### Q10: How do you measure one-way delay accurately if clocks might not be synchronized?
 > **Member 2 Answer:**  
 > *"In our Mininet network emulation, all virtual hosts run as lightweight network namespaces on the same underlying Linux kernel, meaning they share the identical physical system clock (`time.time()`). Thus, $\text{recv\_ts} - \text{sent\_ts}$ accurately captures propagation and queueing delay without NTP clock drift.  
 > For real-world production networks where NTP clock skews can occur, our server code implements clamping: any calculated negative delay is bounded to $0.0\text{ ms}$ with an anomaly warning."*
@@ -599,24 +604,24 @@ Each member should master the questions aligned with their project domain:
 
 ### Domain 3: Failure Analysis, Empirical Benchmarks & Scalability (Assigned to Member 3: `PES2UG25CS620`)
 
-#### Q10: How do you distinguish between an agent process crash and a network link failure?
+#### Q11: How do you distinguish between an agent process crash and a network link failure?
 > **Member 3 Answer:**  
 > *"Both conditions cause packet silence at the server, but their root causes and recovery signatures are distinct:  
 > 1. In an **Agent Process Crash**, the agent terminates. When it restarts, its sequence counter resets to 0. Our `NodeRegistry` detects this reset and emits a `NODE_RESTARTED` event.  
 > 2. In a **Network Link Failure**, the agent continues running in the background, incrementing sequence numbers. When the link recovers, the server receives a packet with a large sequence jump ($\text{gap} = seq - last\_seq - 1$). The server calculates exact packet loss percentage during the outage and transitions the node back to healthy."*
 
-#### Q11: Why did Priority OFF drop 56.67% of critical traffic, while Priority ON dropped 0%?
+#### Q12: Why did Priority OFF drop 56.67% of critical traffic, while Priority ON dropped 0%?
 > **Member 3 Answer:**  
 > *"In our congestion experiment, we configured a 10 Mbps bottleneck link between Open vSwitch and the server, and flooded it with 12 Mbps of background UDP traffic using `iperf`.  
 > When Priority was **OFF**, all traffic shared a single FIFO buffer. Because the aggregate traffic (12 Mbps + telemetry) exceeded link capacity, the switch buffer experienced persistent tail-drop, dropping 56.67% of critical alert packets.  
 > When Priority was **ON**, OpenFlow steered DSCP 46 packets to Queue 2, which has a 5 Mbps guaranteed rate. The switch buffer dropped background packets from Queue 0 while preserving Queue 2, achieving **0.00% critical packet loss** and reducing p95 latency from 30.75 ms to 1.48 ms."*
 
-#### Q12: How did you benchmark 80 nodes on a single machine without crashing the host?
+#### Q13: How did you benchmark 80 nodes on a single machine without crashing the host?
 > **Member 3 Answer:**  
 > *"Because our health agent is designed with minimal resource consumption (only 420-byte wire size and low CPU usage) and the central server uses non-blocking POSIX `select` multiplexing on a single thread, running 80 lightweight agent processes consumes under 150 MB of RAM combined.  
 > In `experiments/run_scalability_test.py`, we benchmarked $N = 5, 10, 20, 40, \text{and } 80$ nodes, demonstrating linear throughput scaling up to 184.2 packets/sec with 0.0% packet loss and under 5% server CPU utilization."*
 
-#### Q13: How does the server handle duplicate or out-of-order packets?
+#### Q14: How does the server handle duplicate or out-of-order packets?
 > **Member 3 Answer:**  
 > *"In `server/node_registry.py`, we maintain `last_seq` for each registered node:  
 > - If $seq == last\_seq$, the datagram is flagged as a duplicate, logged in a duplicate counter, and discarded.  

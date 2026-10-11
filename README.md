@@ -8,9 +8,9 @@
 A distributed, low-latency remote system health monitoring application that couples a custom **UDP telemetry protocol** with an **OpenFlow 1.3 SDN controller (Ryu + Open vSwitch)** to guarantee delivery and strict priority for critical monitoring traffic over congested network bottlenecks.
 
 ### Team Members & SRNs
-- **Member 1 (`PES2UG25CS609`):** Architecture & Protocol Lead (Problem Context, UDP Protocol Design, Agent Sampling & DSCP Marking)
-- **Member 2 (`PES2UG25CS642` / Y-astro):** Core Systems & SDN Technical Lead (Server Non-Blocking I/O, Alert Engine & Hysteresis, OpenFlow 1.3 QoS, Live Demo)
-- **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Failure Detection & Silence, Empirical Benchmarks & Graphs, Automated Tests & Conclusions)
+- **Member 1 (`PES2UG25CS642`):** Architecture & Protocol Lead (Problem Context, UDP Protocol Design & 3-Step Pipeline — Slides 1, 2)
+- **Member 2 (`PES2UG25CS609` / Y-astro - Lead):** Core Systems & SDN Technical Lead (Agent Sampling & DSCP 46, Server Select Loop, Alert Engine, OpenFlow 1.3 QoS, Live Demo — Slides 3, 4, 5)
+- **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Failure Detection, Empirical Benchmarks & Graphs, Automated Tests & Conclusions — Slides 6, 7, 8)
 
 ### Presentation & Defense Materials
 - **Presentation Deck (PDF):** [`data/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pdf) (Mirror: [`docs/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pdf))

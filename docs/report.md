@@ -3,8 +3,8 @@
 **Project No. 11**  
 **Course:** Computer Networks & Software-Defined Networking  
 **Team Members & SRNs:**  
-- **Member 1 (`PES2UG25CS609`):** Architecture & Protocol Lead  
-- **Member 2 (`PES2UG25CS642` / Y-astro):** Core Systems & SDN Technical Lead  
+- **Member 1 (`PES2UG25CS642`):** Architecture & Protocol Lead  
+- **Member 2 (`PES2UG25CS609` / Y-astro - Lead):** Core Systems & SDN Technical Lead  
 - **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead  
 **Repository:** [https://github.com/Y-astro/cn-miniproject.git](https://github.com/Y-astro/cn-miniproject.git)  
 **Presentation Slides:** [`data/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pdf)  
