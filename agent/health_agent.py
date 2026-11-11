@@ -147,6 +147,8 @@ class HealthAgent:
     def send_report(self, payload: Dict[str, Any]) -> bool:
         """Encodes and sends payload over UDP socket."""
         try:
+            if not self.sock:
+                return False
             raw = encode(payload)
             # Mark TOS/DSCP based on priority
             tos = TOS_EF_CRITICAL if payload.get("priority") == "CRITICAL" else TOS_BEST_EFFORT

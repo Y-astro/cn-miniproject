@@ -1,24 +1,27 @@
 # Remote System Health Monitoring (UDP + SDN) — Project No. 11
 
-[![Python Tests](https://img.shields.io/badge/pytest-60%20passed-brightgreen.svg)]()
+[![Python Tests](https://img.shields.io/badge/pytest-65%20passed-brightgreen.svg)]()
 [![Coverage](https://img.shields.io/badge/coverage-87%25-green.svg)]()
 [![OpenFlow](https://img.shields.io/badge/OpenFlow-1.3-blue.svg)]()
 [![Protocol](https://img.shields.io/badge/Protocol-UDP-orange.svg)]()
+[![Deliverable 2](https://img.shields.io/badge/Deliverable%202-Complete-success.svg)]()
 
-A distributed, low-latency remote system health monitoring application that couples a custom **UDP telemetry protocol** with an **OpenFlow 1.3 SDN controller (Ryu + Open vSwitch)** to guarantee delivery and strict priority for critical monitoring traffic over congested network bottlenecks.
+A distributed, low-latency remote system health monitoring application that couples a custom **UDP telemetry protocol** with an **OpenFlow 1.3 SDN controller (Ryu + Open vSwitch)** to guarantee delivery, strict QoS prioritization, and dynamic reactive flow control for critical monitoring traffic over congested network bottlenecks.
 
 ### Team Members & SRNs
-- **Member 1 (`PES2UG25CS642`):** Architecture & Protocol Lead (Problem Context, UDP Protocol Design & 3-Step Pipeline — Slides 1, 2)
-- **Member 2 (`PES2UG25CS609` / Y-astro - Lead):** Core Systems & SDN Technical Lead (Agent Sampling & DSCP 46, Server Select Loop, Alert Engine, OpenFlow 1.3 QoS, Live Demo — Slides 3, 4, 5)
-- **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Failure Detection, Empirical Benchmarks & Graphs, Automated Tests & Conclusions — Slides 6, 7, 8)
+- **Member 1 (`PES2UG25CS642`):** Architecture & Protocol Lead (Problem Context, UDP Protocol Design & Robustness Scenarios — D2 Components 1 & 3)
+- **Member 2 (`PES2UG25CS609` / Y-astro - Lead):** Core Systems & SDN Technical Lead (Agent Sampling & DSCP 46, Server Select Loop, Dynamic SDN Flow Control — D2 Component 2)
+- **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Empirical Benchmarks, Comparative Charts, Automated Tests & Live D2 Demo — D2 Components 4 & 5)
 
 ### Presentation & Defense Materials
+- **Deliverable 2 (D2) Master Guide:** [`docs/D2_DELIVERABLE_GUIDE.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/D2_DELIVERABLE_GUIDE.md)
 - **Deliverable 1 (D1) Prep Guide:** [`docs/D1_DELIVERABLE_GUIDE.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/D1_DELIVERABLE_GUIDE.md)
-- **Presentation Deck (PDF):** [`data/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pdf) (Mirror: [`docs/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pdf))
-- **Presentation Deck (PPTX):** [`data/Remote-System-Health-Monitoring.pptx`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pptx) (Mirror: [`docs/Remote-System-Health-Monitoring.pptx`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pptx))
+- **Presentation Deck (PDF):** [`docs/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pdf)
+- **Presentation Deck (PPTX):** [`docs/Remote-System-Health-Monitoring.pptx`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pptx)
 - **3-Member Presentation & Viva Guide:** [`docs/PROJECT_GUIDE_AND_PRESENTATION.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/PROJECT_GUIDE_AND_PRESENTATION.md)
 - **Viva Rapid-Fire Cheat Sheet:** [`docs/VIVA_CHEAT_SHEET.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/VIVA_CHEAT_SHEET.md)
 - **Comprehensive Technical Report:** [`docs/report.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/report.md)
+- **Quick Run Cheat Sheet:** [`docs/howtorun.txt`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/howtorun.txt)
 
 ---
 

@@ -1,5 +1,7 @@
 """Negative and robustness tests (N1 - N4)."""
 
+import os
+from pathlib import Path
 import pytest
 import subprocess
 import sys
@@ -8,16 +10,20 @@ from unittest.mock import patch
 from server.monitor_server import MonitorServer
 from agent.health_agent import HealthAgent
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 
 def test_n1_server_bad_config_exits(tmp_path):
     """N1: Server started with bad config exits with non-zero exit code."""
     bad_cfg = tmp_path / "bad_config.yaml"
     bad_cfg.write_text("thresholds:\n  cpu_percent:\n    warning: 95\n    critical: 50\n")
 
+    server_script = str(PROJECT_ROOT / "server" / "monitor_server.py")
     res = subprocess.run(
-        [sys.executable, "server/monitor_server.py", "--config", str(bad_cfg)],
+        [sys.executable, server_script, "--config", str(bad_cfg)],
         capture_output=True,
         text=True,
+        cwd=str(PROJECT_ROOT),
     )
     assert res.returncode != 0
     assert ("strictly less than" in res.stderr or "ConfigError" in res.stderr or "strictly less than" in res.stdout)
@@ -39,17 +45,20 @@ def test_n2_agent_unreachable_server():
 
 def test_n3_agent_negative_or_zero_interval():
     """N3: Agent started with --interval 0 or negative causes argument error."""
+    agent_script = str(PROJECT_ROOT / "agent" / "health_agent.py")
     res1 = subprocess.run(
-        [sys.executable, "agent/health_agent.py", "--id", "h1", "--interval", "0"],
+        [sys.executable, agent_script, "--id", "h1", "--interval", "0"],
         capture_output=True,
         text=True,
+        cwd=str(PROJECT_ROOT),
     )
     assert res1.returncode != 0
 
     res2 = subprocess.run(
-        [sys.executable, "agent/health_agent.py", "--id", "h1", "--interval", "-2"],
+        [sys.executable, agent_script, "--id", "h1", "--interval", "-2"],
         capture_output=True,
         text=True,
+        cwd=str(PROJECT_ROOT),
     )
     assert res2.returncode != 0
 

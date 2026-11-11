@@ -53,6 +53,8 @@ class HealthMonitorSDNController(app_manager.RyuApp):
 
         # Stats tracking
         self.port_stats_history = {}
+        self.throttled_ports = set()
+        self.quarantined_hosts = set()
         self._init_stats_csv()
 
         # Start background polling thread
@@ -139,8 +141,8 @@ class HealthMonitorSDNController(app_manager.RyuApp):
 
         self.logger.info("Installed proactive QoS rules: Queue 2 (Critical), Queue 1 (Normal), Queue 0 (Best-Effort)")
 
-    def add_flow(self, datapath, priority, match, actions, buffer_id=None):
-        """Installs a flow entry into the OpenFlow table."""
+    def add_flow(self, datapath, priority, match, actions, buffer_id=None, idle_timeout=0, hard_timeout=0):
+        """Installs a flow entry into the OpenFlow table with optional timeouts."""
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
@@ -148,13 +150,110 @@ class HealthMonitorSDNController(app_manager.RyuApp):
         if buffer_id:
             mod = parser.OFPFlowMod(
                 datapath=datapath, buffer_id=buffer_id, priority=priority,
-                match=match, instructions=inst
+                match=match, instructions=inst,
+                idle_timeout=idle_timeout, hard_timeout=hard_timeout,
             )
         else:
             mod = parser.OFPFlowMod(
-                datapath=datapath, priority=priority, match=match, instructions=inst
+                datapath=datapath, priority=priority, match=match, instructions=inst,
+                idle_timeout=idle_timeout, hard_timeout=hard_timeout,
             )
         datapath.send_msg(mod)
+
+    def install_dynamic_throttle(self, datapath, port_no: int, idle_timeout: int = 15):
+        """Dynamically installs an OpenFlow flow rule to throttle/demote non-monitoring bulk traffic.
+
+        Triggered dynamically when port utilization exceeds 80% (8 Mbps) on the 10 Mbps bottleneck link.
+        Demotes best-effort UDP traffic to Queue 0 and prioritizes monitoring queues.
+        """
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        # Intercept bulk UDP cross-traffic (priority 80 > normal 10, but < critical monitoring 100)
+        match = parser.OFPMatch(
+            eth_type=ether_types.ETH_TYPE_IP,
+            ip_proto=17,
+        )
+        actions = [
+            parser.OFPActionSetQueue(queue_id=0),
+            parser.OFPActionOutput(ofproto.OFPP_NORMAL),
+        ]
+        self.add_flow(
+            datapath,
+            priority=80,
+            match=match,
+            actions=actions,
+            idle_timeout=idle_timeout,
+        )
+        self.logger.info(
+            f"[DYNAMIC SDN ACTION] Switch {datapath.id} Port {port_no}: Installed dynamic QoS throttle rule "
+            f"(Priority=80, Queue=0, idle_timeout={idle_timeout}s) to protect monitoring queues!"
+        )
+
+    def remove_dynamic_throttle(self, datapath, port_no: int):
+        """Removes the dynamic throttle rule once congestion subsides."""
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        match = parser.OFPMatch(
+            eth_type=ether_types.ETH_TYPE_IP,
+            ip_proto=17,
+        )
+        mod = parser.OFPFlowMod(
+            datapath=datapath,
+            command=ofproto.OFPFC_DELETE_STRICT,
+            priority=80,
+            match=match,
+            out_port=ofproto.OFPP_ANY,
+            out_group=ofproto.OFPG_ANY,
+        )
+        datapath.send_msg(mod)
+        self.logger.info(
+            f"[DYNAMIC SDN RESTORATION] Switch {datapath.id} Port {port_no}: Congestion resolved. "
+            f"Removed dynamic throttle rule."
+        )
+
+    def quarantine_host(self, datapath, host_ip: str, reason: str = "unauthorized_flood", idle_timeout: int = 30):
+        """Dynamically installs an OpenFlow DROP rule to isolate a rogue or attacking host."""
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+
+        match = parser.OFPMatch(
+            eth_type=ether_types.ETH_TYPE_IP,
+            ipv4_src=host_ip,
+        )
+        # Empty actions list drops all matching frames in hardware
+        self.add_flow(
+            datapath,
+            priority=200,
+            match=match,
+            actions=[],
+            idle_timeout=idle_timeout,
+        )
+        self.quarantined_hosts.add(host_ip)
+        self.logger.warning(
+            f"[DYNAMIC SDN SECURITY] Dynamically quarantined host {host_ip} ({reason}). "
+            f"Installed OpenFlow DROP rule (Priority=200, idle_timeout={idle_timeout}s)."
+        )
+
+    def unquarantine_host(self, datapath, host_ip: str):
+        """Removes the dynamic quarantine DROP rule for a host."""
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        match = parser.OFPMatch(
+            eth_type=ether_types.ETH_TYPE_IP,
+            ipv4_src=host_ip,
+        )
+        mod = parser.OFPFlowMod(
+            datapath=datapath,
+            command=ofproto.OFPFC_DELETE_STRICT,
+            priority=200,
+            match=match,
+            out_port=ofproto.OFPP_ANY,
+            out_group=ofproto.OFPG_ANY,
+        )
+        datapath.send_msg(mod)
+        self.quarantined_hosts.discard(host_ip)
+        self.logger.info(f"[DYNAMIC SDN SECURITY] Unquarantined host {host_ip}. Restored network connectivity.")
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
@@ -242,9 +341,10 @@ class HealthMonitorSDNController(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPPortStatsReply, MAIN_DISPATCHER)
     def port_stats_reply_handler(self, ev):
-        """Monitors port utilization and flags high bottleneck link load."""
+        """Monitors port utilization and dynamically mitigates bottleneck link congestion."""
         body = ev.msg.body
-        dpid = ev.msg.datapath.id
+        datapath = ev.msg.datapath
+        dpid = datapath.id
         for stat in body:
             port_no = stat.port_no
             if port_no > 100:  # Skip local or virtual ports
@@ -256,10 +356,16 @@ class HealthMonitorSDNController(app_manager.RyuApp):
                 delta_sec = now - prev_ts
                 if delta_sec > 0:
                     rate_bps = ((stat.tx_bytes - prev_bytes) * 8.0) / delta_sec
-                    # If bottleneck link (10 Mbps) exceeds 80% (8 Mbps)
+                    # If bottleneck link (10 Mbps) exceeds 80% (8 Mbps) -> Dynamic SDN Congestion Mitigation
                     if rate_bps >= 8_000_000:
                         self.logger.warning(
                             f"[SDN CONGESTION ALERT] Port {port_no} on switch {dpid} TX rate "
                             f"{rate_bps / 1_000_000:.2f} Mbps >= 80% capacity!"
                         )
+                        if (dpid, port_no) not in self.throttled_ports:
+                            self.install_dynamic_throttle(datapath, port_no)
+                            self.throttled_ports.add((dpid, port_no))
+                    elif rate_bps < 4_000_000 and (dpid, port_no) in self.throttled_ports:
+                        self.remove_dynamic_throttle(datapath, port_no)
+                        self.throttled_ports.remove((dpid, port_no))
             self.port_stats_history[(dpid, port_no)] = (stat.tx_bytes, now)

@@ -7,7 +7,7 @@
 - **Member 2 (`PES2UG25CS609` / Y-astro - Lead):** Core Systems & SDN Technical Lead  
 - **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead  
 **Repository:** [https://github.com/Y-astro/cn-miniproject.git](https://github.com/Y-astro/cn-miniproject.git)  
-**Presentation Slides:** [`data/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/data/Remote-System-Health-Monitoring.pdf)  
+**Presentation Slides:** [`docs/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pdf)  
 
 ---
 
@@ -151,9 +151,40 @@ On the 10 Mbps bottleneck link connecting to the server:
 - **Queue 1 (Normal Monitoring):** Guaranteed min-rate = 3.0 Mbps, burst up to 10.0 Mbps.
 - **Queue 0 (Best-Effort Background):** Min-rate = 1.0 Mbps. Heavily queued and dropped during congestion.
 
+### 4. Dynamic SDN Functionality & Reactive Flow Control (Deliverable 2 Milestone)
+To satisfy the Deliverable 2 rubric requirement for dynamic SDN control, our controller actively modulates the data plane in response to real-time network and host conditions:
+
+1. **Continuous Port Statistics Polling:**  
+   Every 2.0 seconds, the Ryu controller issues `OFPPortStatsRequest` messages to calculate the transmission rate on switch ports:
+   $$\text{Rate}_{\text{bps}} = \frac{(\text{tx\_bytes}_t - \text{tx\_bytes}_{t-\Delta t}) \times 8}{\Delta t}$$
+2. **Dynamic Congestion Throttling (`install_dynamic_throttle`):**  
+   When port statistics detect that the bottleneck link exceeds 80% capacity ($\ge 8.0\text{ Mbps}$ on the 10 Mbps link), the controller dynamically pushes a high-priority reactive flow rule:
+   - **Priority 80:** Matches non-monitoring bulk UDP cross-traffic.
+   - **Action:** Forces cross-traffic into Queue 0 (strict rate-limited best effort).
+   - **Timers:** Sets an `idle_timeout = 15\text{s}` so that if the congestion burst ceases, the rule automatically decommissions.
+3. **Dynamic Congestion Restoration (`remove_dynamic_throttle`):**  
+   When port transmission rate drops below 4.0 Mbps, the controller proactively issues an `OFPFC_DELETE_STRICT` message, clearing the throttle flow entry and restoring standard fair queueing.
+4. **Reactive Rogue Host Quarantine (`quarantine_host`):**  
+   If an untrusted host floods malformed or unauthorized datagrams, the controller dynamically installs a top-priority OpenFlow flow entry:
+   - **Priority 200:** Matches `eth_type=0x0800, ipv4_src=host_ip`.
+   - **Action:** Empty action list (`actions=[]`), instructing Open vSwitch hardware to drop all attacking frames at line rate with zero CPU penalty on the central monitoring server.
+
 ---
 
-## 6. Experimental Setup & Methodology
+## 6. Challenging Scenarios & Robustness Evaluation
+
+Deliverable 2 explicitly assesses system resilience under adverse operating conditions. Three distinct stress scenarios were designed and demonstrated:
+
+1. **Scenario 1: Saturated Bottleneck Link (12 Mbps Flood over 10 Mbps Capacity)**  
+   Simulates network congestion during peak enterprise load or concurrent bulk file transfers. Evaluates whether critical health alerts survive when intermediate buffers experience heavy tail-drop loss.
+2. **Scenario 2: Node Failure & Network Link Severance**  
+   Simulates an abrupt process crash (`SIGKILL`), hardware power-off, or physical cable disconnection. Evaluates time-to-detect (TTD) via silence timeout ($3 \times \text{interval}$) and instantaneous recovery upon packet resumption without manual operator intervention.
+3. **Scenario 3: Malformed & Burst Packet Injection**  
+   Fires bursts of 10,000 corrupted, truncated, oversized (> 1400 bytes), and malformed JSON datagrams directly at UDP port 5005. Verifies that the server rejects invalid frames cleanly via the MTU guard and JSON schema validator without crash or memory leak.
+
+---
+
+## 7. Experimental Setup & Methodology
 
 - **Host Platform:** Linux 6.13 / Arch / CachyOS Linux x86_64
 - **Runtime Environment:** Python 3.10.22, Ryu 4.34 (OpenFlow 1.3), Open vSwitch 3.3+, Mininet 2.3.0
@@ -162,11 +193,11 @@ On the 10 Mbps bottleneck link connecting to the server:
 
 ---
 
-## 7. Experimental Results & Analysis
+## 8. Experimental Results & Analysis
 
 All numerical values are extracted directly from experimental logs in `results/`.
 
-### 7.1 Baseline Latency
+### 8.1 Baseline Latency
 Under uncongested conditions ($N = 5$ agents, $0.5$s interval), one-way transmission latency and alert detection delay were recorded:
 
 | Metric | Mean (ms) | Std Dev (ms) | p50 (ms) | p95 (ms) | p99 (ms) | Max (ms) |
@@ -180,7 +211,7 @@ Under uncongested conditions ($N = 5$ agents, $0.5$s interval), one-way transmis
 
 ---
 
-### 7.2 Congestion: Priority OFF vs. Priority ON
+### 8.2 Congestion: Priority OFF vs. Priority ON
 
 To evaluate SDN QoS, a 12 Mbps UDP background flood was injected across the 10 Mbps bottleneck link.
 
@@ -195,7 +226,7 @@ To evaluate SDN QoS, a 12 Mbps UDP background flood was injected across the 10 M
 
 ---
 
-### 7.3 Node Failure Detection and Recovery
+### 8.3 Node Failure Detection and Recovery
 
 Three failure scenarios were tested across 5 repeated trials ($interval = 0.5$s, silence multiplier = $3.0$):
 
@@ -211,7 +242,7 @@ Three failure scenarios were tested across 5 repeated trials ($interval = 0.5$s,
 
 ---
 
-### 7.4 Scalability Evaluation
+### 8.4 Scalability Evaluation
 
 The monitoring system was evaluated under increasing cluster dimensions ($N = 5, 10, 20, 40, 80$ agents) across intervals of $1.0$s and $0.5$s:
 
@@ -234,7 +265,7 @@ The monitoring system was evaluated under increasing cluster dimensions ($N = 5,
 
 ---
 
-### 7.5 Protocol Overhead Analysis
+### 8.5 Protocol Overhead Analysis
 
 | Report Type | Payload Size (bytes) | Wire Size (bytes) | Bandwidth @ 1.0s (kbps) | Bandwidth @ 0.5s (kbps) |
 |---|---|---|---|---|
@@ -245,7 +276,7 @@ The monitoring system was evaluated under increasing cluster dimensions ($N = 5,
 
 ---
 
-## 8. Discussion
+## 9. Discussion
 
 ### UDP Trade-Offs
 - **Pros:** Zero handshake overhead, immune to head-of-line blocking, connectionless scaling to thousands of nodes.
@@ -261,21 +292,35 @@ Application-level priority tagging alone is ineffective once packets enter opera
 
 ---
 
-## 9. Conclusion
+## 10. Conclusion
 
-This project successfully implements a distributed, low-latency remote health monitoring system combining lightweight UDP transport with OpenFlow 1.3 SDN traffic management. 
+This project successfully implements a distributed, low-latency remote health monitoring system combining lightweight UDP transport with OpenFlow 1.3 SDN traffic management and dynamic flow modulation. 
 
 Empirical benchmarks confirm:
 - **Zero Loss for Critical Alerts:** SDN QoS eliminates packet loss for critical health alerts under severe bottleneck saturation (0.0% vs. 56.67%).
+- **Dynamic Controller Mitigation:** Real-time port load polling throttles bulk cross-traffic dynamically, restoring guaranteed headroom for monitoring flows.
 - **Sub-Millisecond Alerting:** End-to-end alert detection latency averaged 0.26 ms.
 - **High Scalability:** Linear throughput scaling to 80+ nodes with < 5% CPU utilization.
 
 ---
 
-## 10. References
+## 11. References
 
 1. McKeown, N. et al. (2008). *OpenFlow: Enabling Innovation in Campus Networks*. ACM SIGCOMM CCR.
 2. Open Networking Foundation. (2015). *OpenFlow Switch Specification Version 1.3.5*.
 3. Postel, J. (1980). *User Datagram Protocol*. RFC 768.
 4. Nichols, K. et al. (1998). *Definition of the Differentiated Services Field (DS Field) in the IPv4 and IPv6 Headers*. RFC 2474.
 5. Ryu SDN Framework Community. *Ryu SDN Framework Documentation*.
+
+---
+
+## 12. Deliverable 2 Rubric & Contribution Matrix
+
+| Deliverable 2 Component | Marks | Key Evidence & Deliverable Artifact | Primary Owner |
+|---|---|---|---|
+| **Complete Application Functionality** | **4** | • UDP Health Agents (`agent/health_agent.py`)<br>• Central Multiplexing Server (`server/monitor_server.py`)<br>• Dual Alert Engine with Cooldown/Hysteresis (`server/alert_engine.py`)<br>• Real-Time Web Dashboard (`server/web_dashboard.py`) | Member 1 (`PES2UG25CS642`) |
+| **Dynamic SDN Functionality** | **6** | • OpenFlow 1.3 PortStats Polling Loop (`sdn/ryu_controller.py`)<br>• Dynamic Congestion Mitigation Flow Insertion (`install_dynamic_throttle`)<br>• Dynamic Restoration on Normalized Load (`remove_dynamic_throttle`)<br>• Dynamic Rogue Host Isolation (`quarantine_host`) | Member 2 (`PES2UG25CS609` / Y-astro) |
+| **Challenging Scenario / Robustness** | **4** | • Saturated Link (12 Mbps Flood over 10 Mbps bottleneck link)<br>• Process Crash & Silence Detection ($3 \times \text{interval}$ timeout)<br>• Malformed / Burst Attack resilience (10,000 corrupt packets safely rejected) | Member 1 (`PES2UG25CS642`) |
+| **Performance Evaluation & Comparison** | **5** | • Congestion Comparison: Priority ON (0.0% loss) vs Priority OFF (56.7% loss)<br>• Latency & Alert Delay CDFs (`results/latency_cdf.png`)<br>• Failure Detection Boxplots (`results/failure_detection_boxplot.png`)<br>• Scalability Trends across $N = 5$ to $80$ nodes (`results/scalability_trends.png`) | Member 3 (`PES2UG25CS620`) |
+| **Documentation, Final Demo & Viva** | **6** | • IEEE-Style Technical Report (`docs/report.md`)<br>• Deliverable 2 Master Guide (`docs/D2_DELIVERABLE_GUIDE.md`)<br>• 1-Click Interactive Demo (`demo.py` Option 5)<br>• Slide Deck (`docs/Remote-System-Health-Monitoring.pdf`) | All Members |
+

@@ -1,0 +1,75 @@
+================================================================================
+   PROJECT #11: REMOTE SYSTEM HEALTH MONITORING (UDP + SDN)
+   QUICK RUN CHEAT SHEET FOR EVALUATION (DELIVERABLE 1 & DELIVERABLE 2)
+================================================================================
+
+WEBSITE / WEB DASHBOARD: http://localhost:8080
+
+--------------------------------------------------------------------------------
+OPTION 1: THE 1-CLICK INTERACTIVE DEMO (RECOMMENDED FOR VIVA)
+--------------------------------------------------------------------------------
+Run this command from any terminal:
+
+    cd "/run/media/astro/New Volume/Sem3/CN/miniproject"
+    python3 demo.py
+
+Quick Menu Options during Viva:
+  Press 5 -> Run DELIVERABLE 2 SHOWCASE (Challenging Scenarios & Dynamic SDN)
+  Press 1 -> Run Automated Test Suite (65 passed, full verification)
+  Press 2 -> Run Live Localhost Demo (Server + Normal Host + Spiking Host)
+  Press 3 -> Run Failure Detection Demo (Crash, 3s Silence detection, Recovery)
+  Press 4 -> Launch Real-Time Web Dashboard (open http://localhost:8080)
+  Press 6 -> Run Benchmarks & Regenerate All Evaluation Plots into results/
+  Press 7 -> View Benchmark Summary Data (Numerical results for all experiments)
+  Press 8 -> View Deliverable 2 Preparation Guide
+
+--------------------------------------------------------------------------------
+OPTION 2: 3-TERMINAL LIVE DEMO (IF TEACHER REQUESTS SEPARATE TERMINALS)
+--------------------------------------------------------------------------------
+
+Keep 3 terminal tabs ready:
+
+#### Terminal 1: Start Central Server + Web Dashboard
+    cd "/run/media/astro/New Volume/Sem3/CN/miniproject"
+    python3 server/monitor_server.py --port 5005 --web-port 8080
+
+  • What you see: Server begins listening on UDP port 5005 and prints ASCII dashboard.
+  • Open in browser: http://localhost:8080
+
+#### Terminal 2: Start Normal Host Agent (h1)
+    cd "/run/media/astro/New Volume/Sem3/CN/miniproject"
+    python3 agent/health_agent.py --id h1 --server 127.0.0.1 --port 5005 --mode real
+
+  • What you see: Node h1 starts streaming real CPU, RAM, and procs every 1.0 second.
+  • Point to Terminal 1: Node h1 appears as [UP] with NORMAL priority and sub-millisecond delay.
+
+#### Terminal 3: Start Spiking Host Agent (h2)
+    cd "/run/media/astro/New Volume/Sem3/CN/miniproject"
+    python3 agent/health_agent.py --id h2 --server 127.0.0.1 --port 5005 --mode simulated --sim-pattern spike --spike-interval 3
+
+  • What you see: Node h2 generates simulated CPU spikes to 95.0% (threshold 90.0%).
+  • Point to Terminal 1: Immediate critical alert fires:
+    [ALERT] [CRITICAL] Node 'h2' cpu_percent=95.0 (threshold=90.0) Latency=0.23ms
+  • Point out: Socket marks IP_TOS = 0xB8 (DSCP 46 EF), routed to high-priority Queue 2!
+
+--------------------------------------------------------------------------------
+OPTION 3: MININET SDN EMULATION (IF LINUX ROOT PRIVILEGES AVAILABLE)
+--------------------------------------------------------------------------------
+1. Start Ryu Controller:
+    ryu-manager sdn/ryu_controller.py --verbose
+
+2. Start Mininet Star Topology with QoS Queues:
+    sudo -E python3 sdn/topology.py --hosts 5 --interval 1.0
+
+--------------------------------------------------------------------------------
+VIVA INSTANT ANSWER MATRIX
+--------------------------------------------------------------------------------
+Question                              │ Command to Run
+──────────────────────────────────────┼─────────────────────────────────────────
+"Show me Deliverable 2 Showcase"      │ python3 demo.py -> Press 5
+"Show me your tests"                  │ python3 demo.py -> Press 1 (or pytest tests/ -v)
+"Show me dynamic SDN response"        │ python3 demo.py -> Press 5 (Scenario 2 & 3)
+"Show me node crash & recovery"       │ python3 demo.py -> Press 3
+"Show me the web dashboard"           │ python3 demo.py -> Press 4 -> Open http://localhost:8080
+"Show me performance graphs"          │ ls -lh results/*.png
+================================================================================
