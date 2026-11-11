@@ -14,14 +14,14 @@ A distributed, low-latency remote system health monitoring application that coup
 - **Member 3 (`PES2UG25CS620`):** Reliability & Evaluation Lead (Empirical Benchmarks, Comparative Charts, Automated Tests & Live D2 Demo — D2 Components 4 & 5)
 
 ### Presentation & Defense Materials
-- **Deliverable 2 (D2) Master Guide:** [`docs/D2_DELIVERABLE_GUIDE.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/D2_DELIVERABLE_GUIDE.md)
-- **Deliverable 1 (D1) Prep Guide:** [`docs/D1_DELIVERABLE_GUIDE.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/D1_DELIVERABLE_GUIDE.md)
-- **Presentation Deck (PDF):** [`docs/Remote-System-Health-Monitoring.pdf`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pdf)
-- **Presentation Deck (PPTX):** [`docs/Remote-System-Health-Monitoring.pptx`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/Remote-System-Health-Monitoring.pptx)
-- **3-Member Presentation & Viva Guide:** [`docs/PROJECT_GUIDE_AND_PRESENTATION.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/PROJECT_GUIDE_AND_PRESENTATION.md)
-- **Viva Rapid-Fire Cheat Sheet:** [`docs/VIVA_CHEAT_SHEET.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/VIVA_CHEAT_SHEET.md)
-- **Comprehensive Technical Report:** [`docs/report.md`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/report.md)
-- **Quick Run Cheat Sheet:** [`docs/howtorun.txt`](file:///run/media/astro/New%20Volume/Sem3/CN/miniproject/docs/howtorun.txt)
+- **Deliverable 2 (D2) Master Guide:** [`docs/D2_DELIVERABLE_GUIDE.md`](docs/D2_DELIVERABLE_GUIDE.md)
+- **Deliverable 1 (D1) Prep Guide:** [`docs/D1_DELIVERABLE_GUIDE.md`](docs/D1_DELIVERABLE_GUIDE.md)
+- **Presentation Deck (PDF):** [`docs/Remote-System-Health-Monitoring.pdf`](docs/Remote-System-Health-Monitoring.pdf)
+- **Presentation Deck (PPTX):** [`docs/Remote-System-Health-Monitoring.pptx`](docs/Remote-System-Health-Monitoring.pptx)
+- **3-Member Presentation & Viva Guide:** [`docs/PROJECT_GUIDE_AND_PRESENTATION.md`](docs/PROJECT_GUIDE_AND_PRESENTATION.md)
+- **Viva Rapid-Fire Cheat Sheet:** [`docs/VIVA_CHEAT_SHEET.md`](docs/VIVA_CHEAT_SHEET.md)
+- **Comprehensive Technical Report:** [`docs/report.md`](docs/report.md)
+- **Quick Run Cheat Sheet:** [`docs/howtorun.txt`](docs/howtorun.txt)
 
 ---
 

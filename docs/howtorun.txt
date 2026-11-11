@@ -3,7 +3,7 @@
    QUICK RUN CHEAT SHEET FOR EVALUATION (DELIVERABLE 1 & DELIVERABLE 2)
 ================================================================================
 
-WEBSITE / WEB DASHBOARD: http://localhost:8080
+WEBSITE / REAL-TIME WEB DASHBOARD: http://localhost:8080
 
 --------------------------------------------------------------------------------
 OPTION 1: THE 1-CLICK INTERACTIVE DEMO (RECOMMENDED FOR VIVA)
@@ -53,13 +53,58 @@ Keep 3 terminal tabs ready:
   • Point out: Socket marks IP_TOS = 0xB8 (DSCP 46 EF), routed to high-priority Queue 2!
 
 --------------------------------------------------------------------------------
-OPTION 3: MININET SDN EMULATION (IF LINUX ROOT PRIVILEGES AVAILABLE)
+OPTION 3: FULL LIVE MININET SDN EMULATION (FINDING 3 - IF ROOT AVAILABLE)
 --------------------------------------------------------------------------------
-1. Start Ryu Controller:
+
+Use this if the teacher asks to see the live Mininet virtual network topology:
+
+#### Step 1: Start Ryu OpenFlow 1.3 Controller (Terminal 1)
+    cd "/run/media/astro/New Volume/Sem3/CN/miniproject"
     ryu-manager sdn/ryu_controller.py --verbose
 
-2. Start Mininet Star Topology with QoS Queues:
+  • What you see: Controller initializes, starts periodic port/flow stats polling, and listens on port 6633.
+
+#### Step 2: Launch Mininet Topology with HTB QoS Queues (Terminal 2)
+    cd "/run/media/astro/New Volume/Sem3/CN/miniproject"
     sudo -E python3 sdn/topology.py --hosts 5 --interval 1.0
+
+  • What you see: Mininet creates switch s1, hosts h1..h5, server h_server (10.0.0.100), configures OVS HTB queues (Queue 0, 1, 2) on the 10 Mbps bottleneck link, connects to Ryu, and drops you into the `mininet>` prompt.
+
+#### Step 3: Trigger 12 Mbps Cross-Traffic Burst in Mininet CLI
+  In the `mininet>` prompt, inject a 12 Mbps UDP background flood from h3 to h_server:
+    mininet> h3 iperf -u -c 10.0.0.100 -b 12M -t 10
+
+  • What you see in Terminal 1 (Ryu log):
+    [SDN CONGESTION ALERT] Port 1 on switch 1 TX rate 9.60 Mbps >= 80% capacity!
+    [DYNAMIC SDN ACTION] Switch 1 Port 1: Installed dynamic QoS throttle rule (Priority=80, Queue=0, idle_timeout=15s) to protect monitoring queues!
+
+#### Step 4: Inspect Live OpenFlow Flow Rules & QoS Queues (Terminal 3)
+  Run these commands to inspect hardware switch state:
+
+  • View Active Flow Entries & Byte Counters:
+    sudo ovs-ofctl -O OpenFlow13 dump-flows s1
+
+  • View HTB Queue Packet / Byte Counters (Queue 0 vs 1 vs 2):
+    sudo ovs-ofctl -O OpenFlow13 queue-stats s1
+
+  • View Switch Port Statistics:
+    sudo ovs-ofctl -O OpenFlow13 dump-ports s1
+
+--------------------------------------------------------------------------------
+EMERGENCY UTILITY & TROUBLESHOOTING COMMANDS
+--------------------------------------------------------------------------------
+• Clean up Mininet if it crashed or hung:
+    sudo mn -c
+
+• Verify UDP port 5005 is active / listening:
+    ss -u -l -n -p | grep 5005
+
+• Check and kill any lingering Python agent/server processes:
+    pkill -f "monitor_server.py"
+    pkill -f "health_agent.py"
+
+• Run full test suite with coverage report:
+    pytest tests/ -v --cov=common --cov=server --cov=agent --cov=sdn --cov-report=term-missing
 
 --------------------------------------------------------------------------------
 VIVA INSTANT ANSWER MATRIX
@@ -67,9 +112,11 @@ VIVA INSTANT ANSWER MATRIX
 Question                              │ Command to Run
 ──────────────────────────────────────┼─────────────────────────────────────────
 "Show me Deliverable 2 Showcase"      │ python3 demo.py -> Press 5
-"Show me your tests"                  │ python3 demo.py -> Press 1 (or pytest tests/ -v)
+"Show me your tests (65 tests)"       │ python3 demo.py -> Press 1 (or pytest tests/ -v)
 "Show me dynamic SDN response"        │ python3 demo.py -> Press 5 (Scenario 2 & 3)
 "Show me node crash & recovery"       │ python3 demo.py -> Press 3
 "Show me the web dashboard"           │ python3 demo.py -> Press 4 -> Open http://localhost:8080
+"Show me live OpenFlow switch flows"  │ sudo ovs-ofctl -O OpenFlow13 dump-flows s1
+"Show me QoS queue statistics"        │ sudo ovs-ofctl -O OpenFlow13 queue-stats s1
 "Show me performance graphs"          │ ls -lh results/*.png
 ================================================================================
