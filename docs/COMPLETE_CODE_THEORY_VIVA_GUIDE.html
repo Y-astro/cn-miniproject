@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Code-first study, implementation walkthrough and viva guide for Remote System Health Monitoring using UDP sockets, Mininet and Ryu OpenFlow 1.3.">
+<title>CN Mini-Project | Complete Code + Theory + Viva Guide</title>
+<style>
+:root{--bg:#f7f9fc;--surface:#fff;--surface2:#f0f5fb;--text:#19283e;--muted:#5b6b7f;--line:#dbe5ef;--accent:#1269cb;--accent2:#1450a0;--good:#08765c;--warn:#a76314;--bad:#b53a3b;--shadow:0 10px 28px rgba(30,58,85,.06);--code:#101d2f;--codefg:#edf5ff}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:22px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.67 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--accent)}a:hover{text-decoration-thickness:2px}button,input{font:inherit}button{cursor:pointer}h1,h2,h3,h4{line-height:1.22;letter-spacing:-.025em}h1{font-size:clamp(2.2rem,5vw,4.4rem);margin:.3em 0}h2{font-size:clamp(1.65rem,3vw,2.3rem);margin:0 0 .6em}h3{font-size:1.35rem;margin:1.45em 0 .5em}h4{font-size:1.05rem;margin:1.1em 0 .4em}p{margin:.75em 0 1em}ul,ol{padding-left:1.45em}li{padding-left:.14em;margin:.35em 0}code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}p code,li code,td code{background:#e9f0f9;border-radius:4px;padding:.1em .33em;overflow-wrap:anywhere}pre{margin:0;white-space:pre;overflow:auto;tab-size:4}pre code{font-size:.84rem;line-height:1.57}table{border-collapse:collapse;width:100%;font-size:.93rem}th,td{text-align:left;border-bottom:1px solid var(--line);padding:.7rem .65rem;vertical-align:top}th{background:var(--surface2);font-size:.86rem}caption{caption-side:bottom;text-align:left;font-size:.82rem;color:var(--muted);padding-top:.5rem}.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin:1.1rem 0}.table-wrap table th:first-child{white-space:nowrap}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1800px;margin:auto;min-height:100vh}.sidebar{height:100vh;position:sticky;top:0;overflow-y:auto;border-right:1px solid var(--line);background:var(--surface);padding:1.35rem 1.25rem}.brand{font-weight:850;font-size:1.1rem;letter-spacing:-.03em}.brand b{color:var(--accent)}.aside-caption{font-size:.75rem;text-transform:uppercase;letter-spacing:.11em;font-weight:750;color:var(--muted);margin:1.2rem 0 .45rem}.nav a{display:block;padding:.48rem .65rem;border-radius:9px;text-decoration:none;font-size:.9rem;color:var(--text);font-weight:530}.nav a:hover,.nav a.active{background:var(--surface2);color:var(--accent2)}.search{width:100%;padding:.65rem .75rem;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:9px;margin:1rem 0 .25rem}.progress-track{height:9px;border-radius:10px;background:var(--line);overflow:hidden}.progress-track>div{height:100%;width:0;background:linear-gradient(90deg,#158c84,#3b8be7);transition:width .2s}.progress-text{display:block;color:var(--muted);font-size:.84rem;margin-top:.4rem}.sidebar-foot{font-size:.77rem;color:var(--muted);border-top:1px solid var(--line);margin-top:1.2rem;padding-top:1rem}
+main{min-width:0;padding-bottom:5rem}.hero{background:radial-gradient(circle at 90% 10%,#2466aa 0,transparent 30%),linear-gradient(135deg,#0e223a,#133b68 72%,#145383);color:white;padding:4rem clamp(1.2rem,4vw,4.2rem) 3.4rem}.hero-inner{max-width:1050px;margin:auto}.eyebrow{text-transform:uppercase;font-size:.78rem;letter-spacing:.16em;font-weight:800;opacity:.82}.hero p{font-size:1.1rem;max-width:760px;color:#d5e7ff}.hero a{color:white}.hero-cards{display:flex;flex-wrap:wrap;gap:.75rem;margin:1.7rem 0}.hero-card{padding:.82rem 1rem;border:1px solid #5b80a5;background:#ffffff13;border-radius:10px;min-width:130px}.hero-card strong{display:block;font-size:1.55rem;color:white}.hero-card span{font-size:.83rem;color:#dbe9ff}.hero-cta{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.1rem}.btn{display:inline-block;text-decoration:none;font-weight:700;border-radius:10px;padding:.7rem 1rem;border:1px solid #b5d4ff}.btn.primary{background:#f0f7ff;color:#17406f}.btn.outline{color:#fff;border-color:#92bce9}.print-btn{border:1px solid var(--line);background:var(--surface);padding:.45rem .7rem;border-radius:8px;color:var(--text)}.content{max-width:1150px;margin:auto;padding:0 clamp(1rem,4vw,4rem)}section.chapter{padding:3.2rem 0 2.1rem;border-bottom:1px solid var(--line)}.chapter-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}.chapter-head h2{margin-top:.1rem}.chapter-index{display:block;color:var(--accent);font-weight:800;font-size:.78rem;letter-spacing:.13em;text-transform:uppercase;margin-bottom:.5rem}.done-toggle{white-space:nowrap;display:inline-flex;align-items:center;gap:.45rem;padding:.48rem .65rem;border:1px solid var(--line);border-radius:9px;background:var(--surface);font-size:.82rem;color:var(--muted)}.done-toggle input{accent-color:var(--good);width:16px;height:16px}.lead{font-size:1.075rem;color:var(--muted);max-width:850px}.grid2,.grid3{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1.3rem 0}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.panel{border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:1.15rem 1.25rem;box-shadow:var(--shadow)}.panel h3,.panel h4{margin-top:0}.panel p:last-child{margin-bottom:0}.mini{font-size:.86rem;color:var(--muted)}.label{font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;font-weight:820;color:var(--accent);margin-bottom:.3rem}.note{border-left:4px solid var(--accent);background:var(--surface2);padding:1rem 1.2rem;border-radius:0 9px 9px 0;margin:1.2rem 0}.note.warn{border-color:var(--warn);background:#fff5e8}.note.red{border-color:var(--bad);background:#fff0f0}.note.good{border-color:var(--good);background:#eaf8f3}.note h4{margin:0 0 .4rem}.note p:last-child{margin-bottom:0}.pill{display:inline-block;font-size:.72rem;padding:.18rem .58rem;border-radius:20px;background:#d9ebff;color:#195fa6;margin-right:.4rem;font-weight:750}.pill.gold{background:#fff0c7;color:#805b06}.pill.green{background:#d6f3e8;color:#06694e}.file-link{font-family:ui-monospace,Consolas,monospace;font-size:.86rem}.codebox{background:var(--code);border:1px solid #233b57;border-radius:13px;overflow:hidden;margin:1.15rem 0;box-shadow:0 8px 24px #10203918}.codebar{background:#1b2c43;color:#cbdbee;display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.54rem 1rem;font-size:.79rem}.copy{border:1px solid #4e6d91;background:transparent;color:#edf4ff;padding:.16rem .6rem;border-radius:6px;font-size:.75rem}.codebox pre{padding:1rem 1.15rem;color:var(--codefg)}.codebox pre .comment{color:#94b4d7}.callout-row{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.1rem 0}.step{padding:.5rem .7rem;background:var(--surface);border:1px solid var(--line);border-radius:9px;font-size:.87rem}.step strong{color:var(--accent)}.arrow{align-self:center;color:var(--accent);font-weight:800}.architecture{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:1.2rem;margin:1.2rem 0;overflow-x:auto}.architecture svg{display:block;max-width:100%;width:900px;height:auto;margin:auto}.architecture figcaption,.figure figcaption{font-size:.82rem;color:var(--muted);margin-top:.65rem}.formula{background:var(--surface2);border:1px solid var(--line);border-radius:9px;padding:.95rem 1rem;margin:.8rem 0;font-family:ui-monospace,Consolas,monospace;font-size:.9rem;overflow-x:auto}.details{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:.65rem 0}.details summary{cursor:pointer;font-weight:720;padding:.82rem 1rem}.details .answer{padding:0 1rem 1rem;color:var(--muted)}.details .answer p{margin-top:.25rem}.two-up{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.figure{margin:1rem 0;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:.9rem}.figure img{max-width:100%;width:100%;height:auto;border-radius:7px}.q-number{color:var(--accent);font-weight:900;margin-right:.3em}.sourcebar{display:flex;flex-wrap:wrap;gap:.6rem;margin:.7rem 0 1.2rem}.sourcebar a{font-size:.84rem;display:inline-block;border:1px solid var(--line);border-radius:7px;padding:.32rem .55rem;background:var(--surface);text-decoration:none}.checklist{list-style:none;padding:0}.checklist li{padding:.7rem .8rem;border-bottom:1px solid var(--line);margin:0}.checklist li::before{content:"□";font-size:1.15rem;color:var(--good);margin-right:.6rem}.timeline{list-style:none;padding:0;margin:1rem 0;counter-reset:course}.timeline li{position:relative;padding:.35rem 1rem .95rem 3rem;border-left:2px solid var(--line);margin-left:1rem}.timeline li::before{counter-increment:course;content:counter(course);position:absolute;left:-1rem;top:.2rem;display:grid;place-items:center;width:2rem;height:2rem;border-radius:100%;background:var(--accent);color:#fff;font-weight:bold}.timeline li:last-child{border:0}.small{text-transform:none;font-size:.8rem;color:var(--muted);font-weight:500}.footer{text-align:center;padding:2.3rem 1rem;color:var(--muted);font-size:.83rem}.focus-mode .sidebar{display:none}.focus-mode .layout{grid-template-columns:1fr}.hidden-by-search{display:none!important}.top-controls{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}.tag{font-size:.83rem;font-weight:650;color:var(--accent2)}.math-list dd{margin:0 0 1rem 1.2rem;color:var(--muted)}.math-list dt{font-weight:750}.compact-list li{margin:.18em 0}
+@media(max-width:1040px){.layout{grid-template-columns:245px minmax(0,1fr)}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:820px){.layout{display:block}.sidebar{height:auto;max-height:none;position:relative;border-right:0;border-bottom:1px solid var(--line);padding:1rem}.nav{display:flex;gap:.25rem;overflow-x:auto}.nav a{white-space:nowrap}.aside-caption.nav-label{display:none}.hero{padding:2.5rem 1rem}.grid2,.grid3,.two-up{grid-template-columns:1fr}.chapter-head{flex-direction:column}.sidebar-foot{display:none}section.chapter{padding:2.1rem 0 1.5rem}}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1825;--surface:#142234;--surface2:#1c3047;--text:#e4edf7;--muted:#afc0d3;--line:#2c445f;--accent:#83bdff;--accent2:#b2d7ff;--good:#7ce7ba;--warn:#ffce79;--bad:#ff989d;--shadow:none;--code:#07111f}p code,li code,td code{background:#274058}.note.warn{background:#362b1d}.note.red{background:#3a232a}.note.good{background:#143a32}.pill{background:#173759;color:#a9d3ff}.pill.gold{background:#473816;color:#ffe09d}.pill.green{background:#174535;color:#a0eed0}.hero{background:linear-gradient(130deg,#071524,#112b50)}}
+@media print{body{font-size:10pt;background:white;color:black}.layout{display:block}.sidebar,.hero-cta,.done-toggle,.print-btn,.copy,.top-controls{display:none!important}.hero{background:white;color:#111;padding:.2in 0}.hero p,.hero-card span{color:#222}.hero-card{border:1px solid #ccc}.hero-card strong{color:#111}.content{padding:0;max-width:none}section.chapter{break-before:page;padding:0 0 .2in}.codebox{break-inside:avoid;color:black}.codebox pre{white-space:pre-wrap;color:white}.panel,.note,.table-wrap{break-inside:avoid}.figure img{max-height:3.5in;object-fit:contain}a{color:#222}h2{font-size:18pt}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar" aria-label="Guide navigation">
+  <div class="brand">CN<span> / </span><b>Mini-Project</b></div>
+  <div class="mini">Remote System Health Monitoring</div>
+  <input id="section-search" class="search" type="search" placeholder="Search guide (e.g. DSCP, UDP)..." aria-label="Search chapters">
+  <div class="aside-caption">Your progress</div>
+  <div class="progress-track" aria-hidden="true"><div id="progress-fill"></div></div>
+  <span class="progress-text" id="progress-label">0 chapters completed</span>
+  <div class="aside-caption nav-label">Study chapters</div>
+  <nav class="nav" id="toc">
+    <a href="#start">01 · What are we building?</a>
+    <a href="#rubric">02 · Exact grading rubric</a>
+    <a href="#architecture">03 · Architecture &amp; packet journey</a>
+    <a href="#fundamentals">04 · Computer-networking theory</a>
+    <a href="#protocol">05 · JSON/UDP protocol</a>
+    <a href="#agent">06 · Health agent + metrics</a>
+    <a href="#server">07 · Server + node registry</a>
+    <a href="#alerts">08 · Alerting &amp; failure logic</a>
+    <a href="#sdn">09 · Ryu, OpenFlow &amp; QoS</a>
+    <a href="#mininet">10 · Mininet topology</a>
+    <a href="#dashboard">11 · Web UI &amp; configuration</a>
+    <a href="#experiments">12 · Experiments &amp; results</a>
+    <a href="#tests">13 · Tests &amp; reproducibility</a>
+    <a href="#demo">14 · Run &amp; present the project</a>
+    <a href="#limitations">15 · Limitations &amp; improvements</a>
+    <a href="#viva">16 · Viva questions &amp; answers</a>
+    <a href="#plan">17 · Study plan &amp; checklist</a>
+    <a href="#cheatsheet">18 · Last-minute cheat sheet</a>
+  </nav>
+  <div class="top-controls">
+    <button class="print-btn" id="focus-toggle" type="button">Focus view</button>
+    <button class="print-btn" id="print-guide" type="button">Print / PDF</button>
+    <button class="print-btn" id="reset-progress" type="button">Reset checks</button>
+  </div>
+  <div class="sidebar-foot">Source of truth: <a href="SDN-Socket%20Programming-Guidelines_Rubrics.pdf">official rubric PDF</a> and the linked Python/config/test files. The existing Markdown guides in this folder were deliberately not used.</div>
+</aside>
+<main>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Code-first field manual · Theory + Implementation + Viva</div>
+      <h1>Understand every packet.<br>Defend every design choice.</h1>
+      <p>A complete, repo-specific learning guide to <strong>Remote System Health Monitoring with UDP socket programming, Ryu SDN, OpenFlow 1.3 and Mininet</strong>. Built from the original course rubric and the actual code—not from the existing Markdown study guides.</p>
+      <div class="hero-cards">
+        <div class="hero-card"><strong>15</strong><span>D1 marks</span></div>
+        <div class="hero-card"><strong>25</strong><span>D2 marks</span></div>
+        <div class="hero-card"><strong>65</strong><span>test functions in repo</span></div>
+        <div class="hero-card"><strong>18</strong><span>study chapters</span></div>
+      </div>
+      <div class="hero-cta"><a class="btn primary" href="#start">Start from zero</a><a class="btn outline" href="#viva">Jump to viva practice</a><a class="btn outline" href="#cheatsheet">Emergency revision</a></div>
+      <p class="mini" style="color:#d8e9ff;margin-top:1.1rem">Audit basis: repository main branch inspected on 11 Nov 2026. A code-reading guide, not a claim that Mininet/OVS was executed in this environment.</p>
+    </div>
+  </header>
+  <div class="content">
+
+<section id="start" class="chapter" data-title="mission project objective health monitoring">
+<div class="chapter-head"><div><span class="chapter-index">01 · Orientation</span><h2>What are we actually building?</h2></div><label class="done-toggle"><input type="checkbox" data-done="start"> I can explain this</label></div>
+<p class="lead"><strong>One-sentence pitch:</strong> Multiple machines periodically send health statistics to a central monitor over UDP; the monitor detects overload, missed reports and failures, while a programmable SDN switch can favor urgent health traffic when the network is busy.</p>
+<div class="grid3">
+ <div class="panel"><div class="label">Problem</div><h3>No central visibility</h3><p>Without reporting, an administrator may not know a host is overloaded, silent or unreachable until a service visibly fails.</p></div>
+ <div class="panel"><div class="label">Application solution</div><h3>UDP telemetry</h3><p>Agents sample CPU, RAM, process count and network counters; they transmit periodic JSON datagrams to a server that tracks nodes and raises alerts.</p></div>
+ <div class="panel"><div class="label">Network solution</div><h3>SDN priority control</h3><p>The agents mark urgent packets with DSCP 46; Ryu programs OpenFlow rules that select higher-priority OVS queues on a constrained link.</p></div>
+</div>
+<h3>Know the difference between the two systems</h3>
+<ul><li><strong>Application/data plane:</strong> Python agent and server communicate through ordinary UDP sockets. This continues to make sense even on localhost without Mininet.</li><li><strong>SDN control plane:</strong> Ryu talks to Open vSwitch through OpenFlow. It creates flow-table entries and reacts to switch statistics. Ryu does <em>not</em> decode health JSON in the current code.</li><li><strong>Emulation:</strong> Mininet creates virtual hosts, links and an OpenFlow-capable switch so you can demonstrate how the real application behaves in a controlled network.</li></ul>
+<div class="note"><strong>30-second viva answer.</strong> “Our project monitors the health of multiple nodes using a lightweight UDP application protocol. Each agent sends timestamped JSON reports with sequence numbers. A central server validates messages, computes delay and estimated loss, maintains UP/DOWN state, and generates threshold alerts. In Mininet, a Ryu controller and OVS queues prioritize critical DSCP-marked monitoring packets over background traffic. We compare behavior and test failure recovery.”</div>
+<div class="sourcebar"><a href="../agent/health_agent.py">Agent source</a><a href="../server/monitor_server.py">Server source</a><a href="../sdn/ryu_controller.py">Controller source</a><a href="../sdn/topology.py">Topology source</a></div>
+</section>
+
+<section id="rubric" class="chapter" data-title="rubric marks deliverables D1 D2 grading">
+<div class="chapter-head"><div><span class="chapter-index">02 · Requirements</span><h2>The exact official rubric — 40 marks</h2></div><label class="done-toggle"><input type="checkbox" data-done="rubric"> I can explain this</label></div>
+<p class="lead">The original <a href="SDN-Socket%20Programming-Guidelines_Rubrics.pdf">SDN–Socket Programming Guidelines &amp; Rubrics PDF</a> specifies a Mininet + SDN controller + low-level TCP/UDP socket project, with multiple nodes, integration, repeatable tests, config and a final GitHub demo.</p>
+<div class="table-wrap"><table><thead><tr><th>Deliverable</th><th>Component</th><th>Marks</th><th>What to demonstrate from this repo</th></tr></thead><tbody>
+<tr><td rowspan="5"><strong>D1</strong></td><td>Problem understanding &amp; architecture</td><td>2</td><td>Explain agent → UDP → server, controller → switch, and bottleneck link.</td></tr>
+<tr><td>TCP/UDP socket implementation</td><td>4</td><td>Show <code>socket(AF_INET, SOCK_DGRAM)</code>, <code>sendto</code>, <code>recvfrom</code>, JSON validation, multiple agents and errors.</td></tr>
+<tr><td>Mininet + SDN implementation</td><td>4</td><td>Show star topology, Ryu connection, OpenFlow 1.3 rules, OVS QoS queues.</td></tr>
+<tr><td>Socket–SDN integration</td><td>3</td><td>Show agent DSCP markings and matching OpenFlow queue selection on real traffic.</td></tr>
+<tr><td>Initial testing &amp; demo</td><td>2</td><td>Show reports reaching server, node registration, alert and basic Mininet connectivity.</td></tr>
+<tr><td colspan="2"><strong>D1 total</strong></td><td><strong>15</strong></td><td></td></tr>
+<tr><td rowspan="5"><strong>D2</strong></td><td>Complete application functionality</td><td>4</td><td>Normal + simulated metrics, monitoring, logs, dashboard, alerts, recovery.</td></tr>
+<tr><td>Dynamic SDN functionality</td><td><strong>6</strong></td><td>Live switch statistic event → flow change; congestion throttle and/or quarantine; verify rules on OVS.</td></tr>
+<tr><td>Challenging scenario / robustness</td><td>4</td><td>Congestion, node crash, loss/silence, or rogue host; show expected system response.</td></tr>
+<tr><td>Performance evaluation &amp; comparison</td><td>5</td><td>Meaningful before/after baseline; delay, loss, alert latency, repeated trials, reproducible charts.</td></tr>
+<tr><td>Documentation, demo &amp; viva</td><td><strong>6</strong></td><td>Explain architecture, code paths, results, caveats; reproduce the end-to-end demonstration.</td></tr>
+<tr><td colspan="2"><strong>D2 total</strong></td><td><strong>25</strong></td><td></td></tr>
+<tr><td colspan="2"><strong>Overall</strong></td><td><strong>40</strong></td><td>Read this guide with the <em>actual</em> project running.</td></tr></tbody></table></div>
+<h3>Seven non-negotiable requirements from the rubric</h3>
+<ol><li>Low-level sockets, not merely an HTTP library.</li><li>Appropriate client/server components and application-level protocol.</li><li>Multiple communicating nodes, where applicable.</li><li>A Mininet-based topology.</li><li>Demonstrable SDN–socket integration.</li><li>Controlled full-system execution with tests, config and repeatability.</li><li>Complete GitHub code and documentation for the final demo.</li></ol>
+<div class="note warn"><h4>Examiner trap: evidence is not the same as code existing</h4><p>The repository implements Ryu event handlers and OpenFlow actions. But the default <code>experiments/run_congestion_test.py</code> uses a Python queue emulator, and the D2 showcase calls mocked switch objects. To <strong>prove the rubric's full Mininet–SDN integration</strong>, show actual OVS flow/queue statistics changing on a live Mininet run. See chapters 12, 14 and 15.</p></div>
+</section>
+
+<section id="architecture" class="chapter" data-title="architecture diagram packet journey data flow">
+<div class="chapter-head"><div><span class="chapter-index">03 · System design</span><h2>Architecture and a packet’s journey</h2></div><label class="done-toggle"><input type="checkbox" data-done="architecture"> I can explain this</label></div>
+<figure class="architecture">
+<svg viewBox="0 0 900 370" role="img" aria-label="Three monitoring hosts send UDP health JSON through Open vSwitch s1 to a monitor server. Ryu sends OpenFlow rules to the switch.">
+<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6Z" fill="#2477c4"/></marker></defs>
+<rect x="15" y="40" width="230" height="278" rx="14" fill="#e8f2ff" stroke="#aacbea"/>
+<text x="130" y="70" text-anchor="middle" font-size="20" font-weight="750" fill="#16365d">Monitoring agents</text>
+<g fill="#fff" stroke="#92b4d2"><rect x="32" y="94" width="196" height="48" rx="9"/><rect x="32" y="159" width="196" height="48" rx="9"/><rect x="32" y="224" width="196" height="48" rx="9"/></g>
+<g fill="#193c65" font-size="14"><text x="48" y="123">h1 · 10.0.0.1</text><text x="48" y="188">h2 · 10.0.0.2</text><text x="48" y="253">hN · 10.0.0.N</text><text x="130" y="300" text-anchor="middle" font-size="12">CPU / RAM / processes</text></g>
+<rect x="323" y="125" width="207" height="112" rx="15" fill="#def4eb" stroke="#70b79a"/><text x="426" y="163" text-anchor="middle" font-size="19" font-weight="750" fill="#11513d">OVS switch s1</text><text x="426" y="190" text-anchor="middle" font-size="14" fill="#11513d">OpenFlow 1.3</text><text x="426" y="212" text-anchor="middle" font-size="12" fill="#11513d">Queue 0 / 1 / 2</text>
+<rect x="622" y="125" width="260" height="112" rx="15" fill="#e8f2ff" stroke="#aacbea"/><text x="752" y="159" text-anchor="middle" font-size="18" font-weight="750" fill="#16365d">Central server</text><text x="752" y="182" text-anchor="middle" font-size="13" fill="#16365d">10.0.0.100:5005 / UDP</text><text x="752" y="204" text-anchor="middle" font-size="12" fill="#16365d">Registry · Alerts · CSV · UI</text>
+<rect x="333" y="20" width="190" height="64" rx="12" fill="#fff4dd" stroke="#e1b65d"/><text x="428" y="46" text-anchor="middle" font-size="17" fill="#774e09" font-weight="750">Ryu controller</text><text x="428" y="66" text-anchor="middle" font-size="12" fill="#774e09">127.0.0.1:6633</text>
+<path d="M245 181 H318" stroke="#2477c4" stroke-width="3" fill="none" marker-end="url(#ar)"/><path d="M531 181 H617" stroke="#2477c4" stroke-width="3" fill="none" marker-end="url(#ar)"/><path d="M428 84V119" stroke="#c99732" stroke-width="3" stroke-dasharray="5 5" fill="none"/>
+<g font-size="12" fill="#1e4e7d"><text x="280" y="167" text-anchor="middle">UDP</text><text x="575" y="160" text-anchor="middle">10 Mbps</text><text x="575" y="175" text-anchor="middle">bottleneck</text></g>
+<text x="428" y="281" text-anchor="middle" fill="#50677f" font-size="13">Blue arrows = UDP data plane · dashed = OpenFlow control plane</text>
+<text x="428" y="307" text-anchor="middle" fill="#50677f" font-size="12">Agent links: 100 Mbps / 1 ms · server link: 10 Mbps / 2 ms (configured)</text>
+</svg>
+<figcaption>Architecture derived from <code>sdn/topology.py</code>, <code>health_agent.py</code>, <code>monitor_server.py</code> and <code>ryu_controller.py</code>. Diagram is conceptual, not a captured network trace.</figcaption>
+</figure>
+<h3>End-to-end trace of one overloaded node</h3>
+<ol class="timeline">
+<li><strong>Sample.</strong> <code>StatsCollector.collect()</code> produces CPU 95%, RAM 92%, process count 550 (simulated spike example).</li>
+<li><strong>Classify.</strong> <code>HealthAgent.is_critical()</code> crosses a warning threshold, making a JSON <code>ALERT</code> message with <code>priority="CRITICAL"</code>.</li>
+<li><strong>Mark + encode.</strong> <code>encode()</code> validates JSON and its byte length; <code>setsockopt(IP_TOS, 0xB8)</code> marks DSCP 46; <code>sendto()</code> sends to server UDP 5005.</li>
+<li><strong>Forward.</strong> The OVS switch's high-priority OpenFlow rule matches IPv4+UDP destination 5005+DSCP46 and selects queue 2 on output, when its QoS configuration is active.</li>
+<li><strong>Receive.</strong> Server's non-blocking socket receives the datagram, <code>decode()</code> validates it, and <code>NodeRegistry.process_packet()</code> updates node state, delay and sequence tracking.</li>
+<li><strong>Decide.</strong> <code>AlertEngine.evaluate_report()</code> compares each metric with warning and critical thresholds; for CPU 95, it generates a <code>CRITICAL</code> alert (subject to alert state/cooldown).</li>
+<li><strong>Observe.</strong> Server writes report/alert CSV files and the optional HTTP dashboard exposes current status via <code>/api/status</code>.</li>
+</ol>
+<div class="note"><strong>Say this precisely:</strong> DSCP tagging is the <em>application → network integration point</em>. The agent does not remotely tell Ryu “I am critical”; Ryu matches the packet’s IP header field and switch port statistics.</div>
+</section>
+
+<section id="fundamentals" class="chapter" data-title="theory OSI TCP UDP sockets ports IPv4 DSCP QoS OpenFlow Mininet">
+<div class="chapter-head"><div><span class="chapter-index">04 · Foundational theory</span><h2>Computer networking concepts you must know</h2></div><label class="done-toggle"><input type="checkbox" data-done="fundamentals"> I can explain this</label></div>
+<div class="table-wrap"><table><thead><tr><th>Layer / mechanism</th><th>Job in this project</th><th>Concrete example</th></tr></thead><tbody>
+<tr><td>Application (L7)</td><td>Defines meaning of fields.</td><td>JSON <code>HEALTH</code> and <code>ALERT</code> with sequence, timestamp and metrics.</td></tr>
+<tr><td>Transport (L4)</td><td>Delivers independent datagrams to destination port.</td><td>UDP port <code>5005</code>, <code>sendto</code> and <code>recvfrom</code>.</td></tr>
+<tr><td>Network (L3)</td><td>Addresses endpoints and carries DSCP marking.</td><td>IPv4 <code>10.0.0.2 → 10.0.0.100</code>; DSCP 46.</td></tr>
+<tr><td>Link (L2)</td><td>Switches Ethernet frames using MAC addresses/flows.</td><td>Open vSwitch <code>s1</code> and Ryu learning switch logic.</td></tr>
+<tr><td>Control plane</td><td>Programs forwarding behavior separately from packet forwarding.</td><td>Ryu sends OpenFlow <code>FlowMod</code>.</td></tr>
+<tr><td>Data plane</td><td>Actually forwards real monitoring packets.</td><td>OVS uses flow table and selected HTB queue.</td></tr>
+</tbody></table></div>
+<h3>UDP versus TCP (be ready to justify the choice)</h3>
+<div class="grid2">
+ <div class="panel"><h3>UDP — chosen</h3><ul><li>Connectionless; no handshake or transport retransmission.</li><li>Small 8-byte transport header; low send overhead.</li><li>Messages may be lost, duplicated or reordered.</li><li>Application can implement sequence tracking, timeouts and periodic fresh reports.</li><li>Good fit for fast periodic telemetry when stale measurements have low value.</li></ul></div>
+ <div class="panel"><h3>TCP — not used for telemetry here</h3><ul><li>Connection-oriented, ordered byte stream with reliability.</li><li>Handshake, acknowledgements, retransmission, congestion control.</li><li>May delay new data behind old data (head-of-line blocking).</li><li>Helpful for reliable logs/configuration, but would not directly exercise the UDP sequence/loss logic used in this code.</li></ul></div>
+</div>
+<div class="note warn"><strong>Do not say “UDP is always faster.”</strong> It avoids some mechanisms and overhead but neither guarantees low latency nor reliability. The system accepts possible telemetry loss and detects gaps with application sequence numbers.</div>
+<h3>Socket and concurrency basics</h3>
+<ul><li><code>AF_INET</code> = IPv4 address family; <code>SOCK_DGRAM</code> = datagram socket (UDP).</li><li><code>bind((host, port))</code> makes the server receive on a local address/port; <code>0.0.0.0</code> listens on all local IPv4 interfaces.</li><li><code>sendto(data,(ip,port))</code> does not require a connection; <code>recvfrom(buffer)</code> returns data and sender address.</li><li><code>select.select()</code> waits for socket readability without a blocking <code>recvfrom</code> loop. One server can handle multiple agents on one UDP port.</li><li>Threads are used by the demo/tests, dashboard and benchmark runners; the production server loop itself processes incoming datagrams sequentially.</li><li><code>time.time()</code> is a wall clock for timestamps; <code>time.monotonic()</code> is better for elapsed-time scheduling.</li></ul>
+<h3>Key SDN vocabulary</h3>
+<dl class="math-list">
+<dt>SDN (Software-Defined Networking)</dt><dd>Separates programmable control decisions from forwarding hardware/software. Here the controller is Ryu; the datapath is OVS.</dd>
+<dt>OpenFlow 1.3</dt><dd>Protocol and match/action model used by Ryu to control the switch. A flow entry has match fields, priority, counters, timeouts and instructions/actions.</dd>
+<dt>Mininet</dt><dd>Linux-based network emulator using namespaces, virtual Ethernet links, traffic control and virtual switches; it is not a physical multi-machine deployment.</dd>
+<dt>Open vSwitch (OVS)</dt><dd>Programmable virtual switch. It applies flow rules and can use HTB egress QoS queues configured with <code>ovs-vsctl</code>.</dd>
+<dt>QoS, queueing and congestion</dt><dd>When input demand exceeds link capacity, packets wait or drop. Priority scheduling can reduce delay/loss for important traffic, potentially at the expense of other classes.</dd>
+<dt>DSCP and IP_TOS</dt><dd>DSCP uses six upper bits of the IPv4 DS field. Expedited Forwarding is DSCP 46; placing it in <code>IP_TOS</code> gives <code>46 &lt;&lt; 2 = 184 = 0xB8</code> (ECN bits zero).</dd>
+<dt>HTB (Hierarchical Token Bucket)</dt><dd>Linux traffic-control scheduling mechanism; OVS queues can configure minimum and maximum rates at an egress port.</dd>
+<dt>Flow priority</dt><dd>Higher OpenFlow numeric priority wins if multiple matching entries apply; this is distinct from JSON <code>priority</code> and from queue ID.</dd>
+</dl>
+<div class="formula">DSCP 46 (binary 101110) &lt;&lt; 2 → IP_TOS 0xB8 (binary 10111000)</div>
+<div class="formula">Example IPv4/UDP/Ethernet headers ≈ 20 B + 8 B + 14 B = 42 B, before optional tags/physical-layer overhead</div>
+</section>
+
+<section id="protocol" class="chapter" data-title="protocol JSON encoding decoding validation sequence 1400 bytes">
+<div class="chapter-head"><div><span class="chapter-index">05 · Shared protocol</span><h2>Understand every byte of the UDP message</h2></div><label class="done-toggle"><input type="checkbox" data-done="protocol"> I can explain this</label></div>
+<div class="sourcebar"><a class="file-link" href="../common/protocol.py">common/protocol.py</a><a class="file-link" href="../tests/test_protocol.py">tests/test_protocol.py</a></div>
+<p>Because UDP is just a datagram transport, the application defines its own <strong>versioned schema</strong>. Both sides import the same <code>common.protocol</code>, so the sender and receiver agree on validity.</p>
+<div class="codebox"><div class="codebar"><span>Example valid high-priority UDP JSON payload (illustrative)</span><button type="button" class="copy">Copy</button></div><pre><code>{
+  "version": 1,
+  "type": "ALERT",
+  "node_id": "h2",
+  "seq": 5,
+  "sent_ts": 1730000000.123456,
+  "interval": 1.0,
+  "priority": "CRITICAL",
+  "metrics": {
+    "cpu_percent": 95.0,
+    "mem_percent": 92.0,
+    "process_count": 550,
+    "top_processes": [{"name":"worker_proc","cpu":57.0}],
+    "net": {
+      "bytes_sent": 5120, "bytes_recv": 10240,
+      "packets_sent": 50, "packets_recv": 100, "errors": 0
+    }
+  }
+}</code></pre></div>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Meaning / invariant</th></tr></thead><tbody>
+<tr><td><code>version</code></td><td>Must equal integer <code>1</code>; enables future protocol evolution.</td></tr>
+<tr><td><code>type</code></td><td>Must be <code>HEALTH</code>, <code>HEARTBEAT</code> or <code>ALERT</code>.</td></tr>
+<tr><td><code>node_id</code></td><td>Nonempty string identifying the reporting agent (not authenticated).</td></tr>
+<tr><td><code>seq</code></td><td>Integer ≥ 0, monotonically advanced by sender; detects gaps, duplicates, out-of-order and probable restarts.</td></tr>
+<tr><td><code>sent_ts</code></td><td>Positive Unix wall-clock timestamp when the payload was built.</td></tr>
+<tr><td><code>priority</code></td><td>Either <code>NORMAL</code> or <code>CRITICAL</code>; used by the agent to mark IP_TOS.</td></tr>
+<tr><td><code>interval</code></td><td>Optional report period in seconds; used by NodeRegistry for timeout estimation; not independently schema-validated.</td></tr>
+<tr><td><code>metrics</code></td><td>Required dictionary for HEALTH/ALERT; optional for HEARTBEAT. CPU and RAM 0–100, process count nonnegative integer, net counters nonnegative integers.</td></tr>
+</tbody></table></div>
+<div class="codebox"><div class="codebar"><span>common/protocol.py · exact core encode/decode operations (abridged)</span><button type="button" class="copy">Copy</button></div><pre><code>MAX_DATAGRAM_SIZE = 1400
+SUPPORTED_VERSION = 1
+VALID_TYPES = {"HEALTH", "HEARTBEAT", "ALERT"}
+
+def encode(msg, max_bytes=MAX_DATAGRAM_SIZE):
+    validate(msg)
+    raw = json.dumps(msg, separators=(",", ":")).encode("utf-8")
+    if len(raw) > max_bytes:
+        raise ProtocolError(...)
+    return raw
+
+def decode(data, max_bytes=MAX_DATAGRAM_SIZE):
+    if not data:
+        raise ProtocolError(...)
+    if len(data) > max_bytes:
+        raise ProtocolError(...)
+    msg = json.loads(data.decode("utf-8"))
+    validate(msg)
+    return msg</code></pre></div>
+<h3>Why the 1400-byte cap?</h3><p>Keeping the application payload modest reduces the chance of IP fragmentation on an ordinary Ethernet MTU of 1500 bytes. The sender's JSON payload limit is <strong>1400 bytes</strong>, while the server requests a <strong>2048-byte</strong> receive buffer and explicitly decodes with that limit. A valid 1400-byte payload plus IPv4/UDP headers is typically under 1500 bytes; other encapsulation overhead can change this.</p>
+<h3>What happens if input is malformed?</h3><p><code>decode()</code> rejects empty bytes, too-large buffers, bad UTF-8, invalid JSON, wrong version/type, missing IDs, illegal metric types and out-of-range values by raising <code>ProtocolError</code>. <code>MonitorServer.process_datagram()</code> catches this, increases <code>bad_packet_count</code>, emits a rate-limited warning, and stays alive.</p>
+<div class="note"><strong>Viva example:</strong> “UDP does not provide our message framing or field validation; datagram boundaries come from UDP, while the JSON structure, version and input checks come from <code>common/protocol.py</code>.”</div>
+</section>
+
+<section id="agent" class="chapter" data-title="health agent stats collector psutil CPU memory process simulated spikes">
+<div class="chapter-head"><div><span class="chapter-index">06 · Sender code</span><h2>HealthAgent and StatsCollector</h2></div><label class="done-toggle"><input type="checkbox" data-done="agent"> I can explain this</label></div>
+<div class="sourcebar"><a class="file-link" href="../agent/health_agent.py">agent/health_agent.py</a><a class="file-link" href="../agent/stats_collector.py">agent/stats_collector.py</a><a class="file-link" href="../tests/test_agent.py">agent tests</a></div>
+<h3>Actual control flow</h3><div class="callout-row"><span class="step"><strong>1</strong> construct</span><span class="arrow">→</span><span class="step"><strong>2</strong> open UDP socket</span><span class="arrow">→</span><span class="step"><strong>3</strong> collect metrics</span><span class="arrow">→</span><span class="step"><strong>4</strong> classify</span><span class="arrow">→</span><span class="step"><strong>5</strong> encode + DSCP</span><span class="arrow">→</span><span class="step"><strong>6</strong> send, sleep, repeat</span></div>
+<div class="table-wrap"><table><thead><tr><th>Method</th><th>Explain it like this</th></tr></thead><tbody>
+<tr><td><code>HealthAgent.__init__</code></td><td>Validates node ID, port, interval; loads thresholds; creates collector and initial state.</td></tr>
+<tr><td><code>_init_socket</code></td><td>Creates IPv4 UDP socket; starts with Best Effort TOS.</td></tr>
+<tr><td><code>_set_tos</code></td><td>Uses <code>setsockopt(IPPROTO_IP, IP_TOS, ...)</code> if class changes; catches socket errors.</td></tr>
+<tr><td><code>is_critical</code></td><td>Returns true if CPU, RAM or process count reaches its configured <strong>warning</strong> boundary.</td></tr>
+<tr><td><code>build_payload</code></td><td>Increments sequence, timestamps sample, reads stats, produces HEALTH/ALERT; falls back to HEARTBEAT on collector error.</td></tr>
+<tr><td><code>send_report</code></td><td>Calls shared <code>encode</code>, sets TOS based on priority, sends datagram, handles network/validation errors.</td></tr>
+<tr><td><code>run</code></td><td>Periodic loop with <code>time.monotonic()</code>; can simulate stopping after N successful sends and optional recovery.</td></tr>
+<tr><td><code>stop</code></td><td>Marks loop stopped, closes the UDP socket and logs shutdown.</td></tr>
+</tbody></table></div>
+<div class="codebox"><div class="codebar"><span>agent/health_agent.py · classification and network marking (abridged)</span><button type="button" class="copy">Copy</button></div><pre><code># is_critical tests configured WARNING levels:
+return (cpu >= cpu_warn) or (mem >= mem_warn) or (procs >= proc_warn)
+
+priority = "CRITICAL" if self.is_critical(metrics) else "NORMAL"
+msg_type = "ALERT" if priority == "CRITICAL" else "HEALTH"
+
+raw = encode(payload)
+tos = TOS_EF_CRITICAL if payload.get("priority") == "CRITICAL" else TOS_BEST_EFFORT
+self._set_tos(tos)
+self.sock.sendto(raw, (self.server_ip, self.server_port))</code></pre></div>
+<div class="note warn"><h4>Very important naming detail</h4><p>The agent calls the packet <code>CRITICAL</code> as soon as any <strong>warning</strong> threshold is met (CPU ≥70, RAM ≥75, processes ≥300). The server's <code>AlertEngine</code> separately emits <code>WARNING</code> or <code>CRITICAL</code> using warning/critical thresholds. Therefore a DSCP-high-priority packet does <strong>not necessarily</strong> mean a server-side critical alert.</p></div>
+<h3>Metrics collector: real versus simulated</h3>
+<div class="grid2">
+<div class="panel"><h3>Real mode</h3><p><code>psutil.cpu_percent()</code>, <code>psutil.virtual_memory()</code>, <code>psutil.process_iter()</code> and <code>psutil.net_io_counters()</code> supply CPU%, RAM%, process count, top processes and cumulative network bytes/packets/errors.</p><p class="mini">The first instantaneous CPU sample can be imprecise. In Mininet, a process in a host namespace still generally reads the host kernel's machine-wide CPU/memory statistics, not isolated per-virtual-host resources.</p></div>
+<div class="panel"><h3>Simulated mode</h3><p>Four patterns: <code>normal</code> (low stable), <code>spike</code> (high every N ticks), <code>ramp-up</code> (increasing to limits), <code>constant-high</code> (sustained overload). Values are deterministic by tick rather than genuine OS load.</p><p class="mini">Topology starts h2 with <code>spike</code> while other agents default to <code>normal</code>.</p></div>
+</div>
+<div class="codebox"><div class="codebar"><span>agent/stats_collector.py · simulated spike core</span><button type="button" class="copy">Copy</button></div><pre><code>if pattern == "spike":
+    if self._tick % self.spike_interval == 0:
+        cpu = 95.0
+        mem = 92.0
+        procs = 550
+    else:
+        cpu = 25.0 + (self._tick % 5)
+        mem = 35.0 + (self._tick % 5)
+        procs = 120 + (self._tick % 10)</code></pre></div>
+<h3>Why a HEARTBEAT on collection failure?</h3><p>A failed metrics read should not automatically make the server think the node died. The agent can still send a lightweight <code>HEARTBEAT</code> with no metrics. It keeps the registry alive while separately signalling that telemetry is unavailable. Here, <code>StatsCollector._collect_real()</code> returns a <code>collector_error</code> field on complete failure, and <code>build_payload()</code> checks for it.</p>
+<h3>Why monotonic scheduling?</h3><p>The loop maintains a target <code>next_tick</code> and computes remaining sleep. Unlike continually sleeping for exactly one interval <em>after</em> each send, this compensates for work time and resets if lag makes the target overdue. <code>time.monotonic()</code> is unaffected by user/system wall-clock changes.</p>
+</section>
+
+<section id="server" class="chapter" data-title="server UDP receive select node registry packet loss duplicate out of order restart liveness CSV">
+<div class="chapter-head"><div><span class="chapter-index">07 · Receiver code</span><h2>MonitorServer + NodeRegistry</h2></div><label class="done-toggle"><input type="checkbox" data-done="server"> I can explain this</label></div>
+<div class="sourcebar"><a class="file-link" href="../server/monitor_server.py">server/monitor_server.py</a><a class="file-link" href="../server/node_registry.py">server/node_registry.py</a><a class="file-link" href="../tests/test_server_udp.py">UDP server tests</a></div>
+<h3>Server lifecycle</h3><ol><li><code>MonitorServer.__init__</code> loads configuration, creates registry and alert engine, and opens report/alert CSVs with headers. It opens CSV files in <code>"w"</code> mode—starting a new server overwrites those output paths.</li><li><code>start_socket</code> creates a UDP socket, sets <code>SO_REUSEADDR</code>, binds <code>host:port</code> and makes it non-blocking.</li><li><code>run</code> executes <code>select(..., timeout=0.1)</code>; each datagram flows to <code>process_datagram</code>.</li><li>On each valid packet, decode, timestamp, update registry, evaluate alerts, log CSV and increment valid count.</li><li>Every ~0.5 seconds, call <code>registry.check_liveness</code>; periodically print dashboard, if configured.</li><li><code>stop</code> shuts down optional HTTP server, UDP socket and file handles.</li></ol>
+<div class="codebox"><div class="codebar"><span>server/monitor_server.py · receive loop (abridged)</span><button type="button" class="copy">Copy</button></div><pre><code>readable, _, _ = select.select([self.sock], [], [], 0.1)
+recv_ts = time.time()
+if readable:
+    data, addr = self.sock.recvfrom(self.buffer_size)
+    self.process_datagram(data, addr, recv_ts)
+
+if now_mono - last_liveness_check >= 0.5:
+    self.registry.check_liveness(current_ts=recv_ts)</code></pre></div>
+<h3>What the registry remembers per node</h3><p><code>NodeState</code> tracks status (UP/DOWN), last seen time, interval, last sequence, total received, estimated lost, duplicate/out-of-order/restart counters, last metrics, last delay, and a sliding list of up to 500 delay samples.</p>
+<div class="table-wrap"><table><thead><tr><th>Packet event</th><th>Implementation behavior</th><th>Example</th></tr></thead><tbody>
+<tr><td>First packet</td><td>Register new node UP, store first sequence.</td><td>Receive <code>seq=1</code>.</td></tr>
+<tr><td>Forward gap</td><td>Add <code>seq − last_seq − 1</code> to estimated lost packets.</td><td>After 2, receive 5 → 3 and 4 presumed missing.</td></tr>
+<tr><td>Duplicate</td><td>Already seen sequence → increment duplicate counter.</td><td>Receive 5 twice.</td></tr>
+<tr><td>Reordering</td><td>Older unseen sequence (<code>seq &lt; last_seq</code>) → out-of-order counter, unless classified as restart.</td><td>Receive 4 after 5.</td></tr>
+<tr><td>Restart</td><td>New small sequence (0 or 1), or a drop of more than 50 → reset sequence tracking.</td><td>Agent restarts and sends 1 again.</td></tr>
+<tr><td>Timeout</td><td>No report beyond <code>silence_multiplier × interval</code> → NODE_DOWN.</td><td>Default 3 × 1 s = 3 s silence.</td></tr>
+<tr><td>Resumption</td><td>A valid packet for DOWN node → NODE_RECOVERED and status UP.</td><td>Link reconnects.</td></tr>
+</tbody></table></div>
+<div class="formula">Estimated packet loss % = lost_packets / (total_received + lost_packets) × 100</div>
+<div class="formula">Silence threshold = node.interval × silence_multiplier (default: 1.0 × 3.0 = 3 seconds)</div>
+<div class="formula">One-way delay (ms) = (receiver_time − sender_time) × 1000</div>
+<div class="note warn"><strong>What the formulas cannot guarantee:</strong> Sequence gaps estimate lost packets, but reordered late packets do not decrement the historical loss counter. One-way delay requires reasonably synchronized clocks on different machines. The CSV delay is clamped between 0 and 10,000 ms; the registry's average uses a separately calculated nonnegative value (not the same upper clamp).</div>
+<h3>Events vs notifications</h3><p><code>NodeRegistry.process_packet</code> returns and/or calls back on <code>NODE_REGISTERED</code>, <code>NODE_RECOVERED</code> and <code>NODE_RESTARTED</code>. <code>check_liveness</code> emits <code>NODE_DOWN</code>. The server logs failures, writes a silence alert to CSV and prints recovery messages. No SMS/email delivery exists in this code.</p>
+</section>
+
+<section id="alerts" class="chapter" data-title="alert engine warning critical hysteresis cooldown time to detect threshold">
+<div class="chapter-head"><div><span class="chapter-index">08 · Decision logic</span><h2>Threshold alerts, cooldown and hysteresis</h2></div><label class="done-toggle"><input type="checkbox" data-done="alerts"> I can explain this</label></div>
+<div class="sourcebar"><a class="file-link" href="../server/alert_engine.py">server/alert_engine.py</a><a class="file-link" href="../config.yaml">config.yaml</a><a class="file-link" href="../tests/test_alert_engine.py">alert tests</a></div>
+<div class="table-wrap"><table><thead><tr><th>Metric</th><th>Warning</th><th>Critical</th><th>Source</th></tr></thead><tbody>
+<tr><td>CPU %</td><td>70</td><td>90</td><td><code>thresholds.cpu_percent</code></td></tr>
+<tr><td>Memory %</td><td>75</td><td>90</td><td><code>thresholds.mem_percent</code></td></tr>
+<tr><td>Process count</td><td>300</td><td>500</td><td><code>thresholds.process_count</code></td></tr>
+<tr><td>Estimated packet loss %</td><td>5</td><td>20</td><td><code>thresholds.packet_loss_percent</code></td></tr>
+</tbody></table></div>
+<h3>State machine explained with CPU</h3><div class="grid3">
+<div class="panel"><div class="label">Normal</div><h3>CPU 45%</h3><p>Below warning threshold; no new alert. If a prior WARNING exists, it is cleared once CPU goes below the warning minus hysteresis.</p></div>
+<div class="panel"><div class="label">Warning</div><h3>CPU 75%</h3><p>At or above 70 but below 90: <code>WARNING</code> alert on state change or after the cooldown period.</p></div>
+<div class="panel"><div class="label">Critical</div><h3>CPU 95%</h3><p>At or above 90: <code>CRITICAL</code>. A WARNING → CRITICAL transition generates a new alert immediately.</p></div>
+</div>
+<div class="codebox"><div class="codebar"><span>server/alert_engine.py · threshold and cooldown core (abridged)</span><button type="button" class="copy">Copy</button></div><pre><code>if value >= crit_th:
+    target_severity = "CRITICAL"
+elif value >= warn_th:
+    target_severity = "WARNING"
+else:
+    # Existing state may be retained or cleared using hysteresis.
+    ...
+
+if current_state != target_severity:
+    fire_alert = True
+elif (current_time - last_fired) >= self.cooldown_seconds:
+    fire_alert = True</code></pre></div>
+<h3>Why both cooldown and hysteresis?</h3><ul><li><strong>Cooldown (5 s):</strong> Avoids repeating the same alert every report; a severity transition is still immediately actionable.</li><li><strong>Hysteresis (2 percentage points / units):</strong> A WARNING should not rapidly disappear and return when CPU fluctuates around 70. E.g. after WARNING at 70+, 69 may remain warning; below 68 clears it.</li><li><strong>Per-node and per-metric state:</strong> States are keyed by <code>(node_id, metric)</code>; last fired time is keyed also by severity.</li><li><strong>Important nuance:</strong> The code drops CRITICAL to WARNING once the value is below critical but still at/above warning; its hysteresis does not protect that upper downgrade symmetrically.</li></ul>
+<div class="formula">alert_latency_ms = max(0, detect_ts − trigger_ts) × 1000</div>
+<p><code>trigger_ts</code> is the agent report's send timestamp, not a separately instrumented threshold-crossing time. Thus measured alert latency largely reflects transit/processing and clock accuracy, not the full time from when a real-world overload first began.</p>
+<div class="note"><strong>Possible viva follow-up:</strong> “Why not immediately alert on every packet?” Because noisy threshold flapping can overwhelm the operator. We store the alert severity per metric and only re-emit on a state change or once cooldown has elapsed.</div>
+</section>
+
+<section id="sdn" class="chapter" data-title="Ryu OpenFlow 1.3 switch feature event priority queues DSCP dynamic throttle quarantine learning">
+<div class="chapter-head"><div><span class="chapter-index">09 · Highest-yield SDN section</span><h2>Ryu controller, OpenFlow rules and dynamic mitigation</h2></div><label class="done-toggle"><input type="checkbox" data-done="sdn"> I can explain this</label></div>
+<div class="sourcebar"><a class="file-link" href="../sdn/ryu_controller.py">sdn/ryu_controller.py</a><a class="file-link" href="../tests/test_sdn_controller.py">controller tests</a></div>
+<p class="lead">This is the most important D2 technical area: the official rubric assigns <strong>6 marks to dynamic SDN</strong>. Understand both the proactive rules installed at switch connection and the reactive flow modifications issued after stats.</p>
+<h3>Controller event lifecycle</h3>
+<ol><li><code>HealthMonitorSDNController</code> subclasses <code>RyuApp</code> and sets <code>OFP_VERSIONS = [OFP_VERSION]</code> for OpenFlow 1.3.</li><li>Ryu sees <code>EventOFPSwitchFeatures</code> in <code>CONFIG_DISPATCHER</code> and calls <code>switch_features_handler</code>.</li><li>It installs a table-miss rule (priority 0) to send otherwise-unmatched traffic to the controller.</li><li>If <code>sdn.priority_enabled</code> is true, install three proactive QoS classifiers with numeric OpenFlow priorities 100, 50 and 10.</li><li><code>packet_in_handler</code> learns source MAC → input port and either floods unknown destinations or installs basic L2 forwarding rules.</li><li>A Ryu <code>hub.spawn</code> green thread polls <code>OFPFlowStatsRequest</code> and <code>OFPPortStatsRequest</code> every 2 seconds.</li><li><code>port_stats_reply_handler</code> compares byte counters over elapsed time; it can install/remove a dynamic queue-selection rule.</li></ol>
+<div class="table-wrap"><table><thead><tr><th>Flow priority</th><th>Match</th><th>Action</th><th>Effect</th></tr></thead><tbody>
+<tr><td><strong>200</strong> (dynamic)</td><td>IPv4 source host IP</td><td>Empty actions → DROP</td><td>Quarantine when explicitly invoked.</td></tr>
+<tr><td><strong>100</strong></td><td>IPv4 + UDP dst 5005 + DSCP 46</td><td><code>SetQueue(2)</code> + NORMAL output</td><td>Protect urgent telemetry.</td></tr>
+<tr><td><strong>80</strong> (dynamic)</td><td>All IPv4 UDP</td><td><code>SetQueue(0)</code> + NORMAL output</td><td>Demote UDP except packets matched by priority 100.</td></tr>
+<tr><td><strong>50</strong></td><td>IPv4 + UDP dst 5005 + DSCP 0</td><td><code>SetQueue(1)</code> + NORMAL output</td><td>Normal monitoring unless the 80 rule overrides it.</td></tr>
+<tr><td><strong>10</strong></td><td>IPv4 + any UDP</td><td><code>SetQueue(0)</code> + NORMAL output</td><td>Other UDP best effort.</td></tr>
+<tr><td><strong>1</strong> (learned)</td><td>MAC addresses + input port</td><td>Output learned port</td><td>Basic L2 learning flow.</td></tr>
+<tr><td><strong>0</strong></td><td>Match all</td><td>Send to controller</td><td>Table miss.</td></tr>
+</tbody></table></div>
+<div class="codebox"><div class="codebar"><span>sdn/ryu_controller.py · urgent flow (actual core)</span><button type="button" class="copy">Copy</button></div><pre><code>match_crit = parser.OFPMatch(
+    eth_type=ether_types.ETH_TYPE_IP,
+    ip_proto=17,                  # UDP
+    udp_dst=self.mon_port,       # 5005
+    ip_dscp=self.dscp_critical,  # 46
+)
+actions_crit = [
+    parser.OFPActionSetQueue(queue_id=2),
+    parser.OFPActionOutput(ofproto.OFPP_NORMAL),
+]
+self.add_flow(datapath, priority=100,
+              match=match_crit, actions=actions_crit)</code></pre></div>
+<h3>What is a FlowMod?</h3><p><code>add_flow()</code> builds <code>OFPInstructionActions(OFPIT_APPLY_ACTIONS,...)</code>, wraps them in an <code>OFPFlowMod</code>, and sends the message with <code>datapath.send_msg(mod)</code>. The switch then handles future matching packets locally without a round-trip to Python. Numeric rule priority decides which match wins.</p>
+<h3>Reactive congestion mitigation: the complete calculation</h3>
+<div class="codebox"><div class="codebar"><span>sdn/ryu_controller.py · port-stat trigger core</span><button type="button" class="copy">Copy</button></div><pre><code>delta_sec = now - prev_ts
+rate_bps = ((stat.tx_bytes - prev_bytes) * 8.0) / delta_sec
+
+if rate_bps >= 8_000_000:
+    self.install_dynamic_throttle(datapath, port_no)
+elif rate_bps < 4_000_000:
+    self.remove_dynamic_throttle(datapath, port_no)</code></pre></div>
+<p>For example, if a port transmitted <strong>1,200,000 additional bytes in 1 second</strong>, the measured rate is <strong>9,600,000 bits/s = 9.6 Mbps</strong>, exceeding the hard-coded 8 Mbps trigger. The controller installs priority-80 UDP classification into Queue 0. It removes this rule only after the rate falls below 4 Mbps, creating a gap between activation and deactivation (a form of hysteresis).</p>
+<div class="formula">Link utilization = (Δ transmitted bytes × 8) / (Δ time × assumed link bit-rate)</div>
+<div class="note warn"><h4>Exact implementation limitation</h4><p>The priority-80 rule matches <em>all UDP</em>, not merely non-monitoring bulk traffic. Therefore it also overrides priority-50 <strong>normal monitoring</strong>, while priority-100 critical monitoring remains protected. This can be defended as sacrificing less urgent traffic—but do not describe the match as “only background packets.” The controller also hard-codes 8/4 Mbps, even though the YAML defines bandwidth/utilization settings.</p></div>
+<h3>Quarantine and security</h3><p><code>quarantine_host(datapath, host_ip,...)</code> installs a priority-200 IPv4-source DROP rule with a 30-second default idle timeout and records the host IP. <code>unquarantine_host()</code> issues a strict delete for that rule. These are implemented methods, but the main controller code does <strong>not</strong> automatically detect attacker identity and call quarantine; the D2 demo explicitly invokes it with a mocked datapath.</p>
+<h3>Queue IDs versus guaranteed bandwidth</h3><p>Queue <strong>0</strong> is best effort (configured 1 Mbps min), queue <strong>1</strong> normal monitoring (3 Mbps min), queue <strong>2</strong> critical monitoring (5 Mbps min) on the switch-to-server port. These are <em>configured HTB minimum rates</em>; showing that the queues are actually attached and their counters move under load is part of a strong live demo.</p>
+<div class="note"><strong>How to defend SDN integration:</strong> “The telemetry agent sets IP_TOS according to health priority. OVS matches the packet's DSCP and UDP destination port using Ryu-installed OpenFlow 1.3 rules. The controller also polls port counters and changes flow behavior during congestion.”</div>
+</section>
+
+<section id="mininet" class="chapter" data-title="mininet topology OVS server link bandwidth 10 Mbps queue configuration root">
+<div class="chapter-head"><div><span class="chapter-index">10 · Emulated network</span><h2>Mininet setup and OVS QoS</h2></div><label class="done-toggle"><input type="checkbox" data-done="mininet"> I can explain this</label></div>
+<div class="sourcebar"><a class="file-link" href="../sdn/topology.py">sdn/topology.py</a><a class="file-link" href="../config.yaml">config.yaml</a></div>
+<div class="table-wrap"><table><thead><tr><th>Object</th><th>Configuration in the code</th></tr></thead><tbody>
+<tr><td>Controller</td><td>Remote Ryu at <code>127.0.0.1:6633</code>.</td></tr>
+<tr><td>Switch</td><td>One OVS switch <code>s1</code> with <code>protocols="OpenFlow13"</code>.</td></tr>
+<tr><td>Server host</td><td><code>h_server</code> at <code>10.0.0.100/24</code>; UDP server on 5005.</td></tr>
+<tr><td>Agent hosts</td><td><code>h1 ... hN</code>, IPs <code>10.0.0.1 ... 10.0.0.N</code>; default N=5.</td></tr>
+<tr><td>Agent ↔ switch links</td><td><code>TCLink</code>, bandwidth 100 Mbps, configured 1 ms delay.</td></tr>
+<tr><td>Server ↔ switch link</td><td><code>TCLink</code>, 10 Mbps bottleneck, configured 2 ms delay.</td></tr>
+<tr><td>Server egress port</td><td>Assumed <code>s1-eth1</code> in QoS setup.</td></tr>
+<tr><td>Queues</td><td>linux-htb; q0 min 10%, q1 min 30%, q2 min 50% of bottleneck bandwidth. Max set to bottleneck.</td></tr>
+</tbody></table></div>
+<div class="codebox"><div class="codebar"><span>sdn/topology.py · topology construction (abridged)</span><button type="button" class="copy">Copy</button></div><pre><code>net = Mininet(controller=None, switch=OVSSwitch,
+              link=TCLink, autoSetMacs=True)
+c0 = net.addController("c0", controller=RemoteController,
+                       ip=controller_ip, port=controller_port)
+s1 = net.addSwitch("s1", protocols="OpenFlow13")
+server_host = net.addHost("h_server", ip="10.0.0.100/24")
+server_link = net.addLink(server_host, s1, bw=10.0, delay="2ms")
+for i in range(1, num_hosts + 1):
+    h = net.addHost("h" + str(i), ip="10.0.0." + str(i) + "/24")
+    net.addLink(h, s1, bw=100, delay="1ms")</code></pre></div>
+<p><code>configure_ovs_qos()</code> issues <code>ovs-vsctl</code> commands to create QoS and three Queue objects attached to a port. The program first runs a broad <code>--all destroy QoS / Queue</code> command: this is acceptable only in an isolated lab you control—<strong>do not run on a shared/production OVS instance</strong>.</p>
+<h3>Why the bottleneck matters</h3><p>If agents each have a 100 Mbps path to one switch but the monitoring server's shared link is only 10 Mbps, background traffic can saturate that egress link. High-priority monitoring packets can then have shorter queue waits than best-effort packets when queue selection and scheduling are correctly configured.</p>
+<div class="note warn"><strong>Beware prerequisites:</strong> Mininet/OVS needs Linux, correct OVS installation and root privileges. The topology uses <code>sys.executable</code> inside Mininet host shell commands; ensure that Python and its packages are visible in that execution environment. On many setups, the 100/10 Mbps and delays apply to virtual links, not physical internet bandwidth.</div>
+</section>
+
+<section id="dashboard" class="chapter" data-title="dashboard HTTP JSON status API YAML config logging">
+<div class="chapter-head"><div><span class="chapter-index">11 · Configuration and UI</span><h2>How the dashboard, YAML and logging fit together</h2></div><label class="done-toggle"><input type="checkbox" data-done="dashboard"> I can explain this</label></div>
+<div class="sourcebar"><a class="file-link" href="../server/web_dashboard.py">server/web_dashboard.py</a><a class="file-link" href="../common/config_loader.py">common/config_loader.py</a><a class="file-link" href="../common/logger.py">common/logger.py</a><a class="file-link" href="../config.yaml">config.yaml</a></div>
+<h3>The web dashboard is a separate TCP/HTTP service</h3><p>The project uses UDP for telemetry. The <em>optional visual dashboard</em> is a Python <code>http.server</code>-based HTTP server, usually launched on <code>8080</code> via <code>--web-port 8080</code>. Its browser calls <code>GET /api/status</code> every second; the server returns live registry data, packet counters and the last five alert records.</p>
+<div class="codebox"><div class="codebar"><span>Dashboard request/response (illustrative subset)</span><button type="button" class="copy">Copy</button></div><pre><code>GET http://localhost:8080/api/status
+
+{
+  "valid_packet_count": 12,
+  "bad_packet_count": 0,
+  "nodes": {
+    "h2": {
+      "status": "UP",
+      "last_seq": 12,
+      "total_received": 12,
+      "loss_percent": 0.0,
+      "avg_delay_ms": 0.7,
+      "metrics": {"cpu_percent": 95, "mem_percent": 92}
+    }
+  },
+  "active_alerts": []
+}</code></pre></div>
+<p><code>DashboardHTTPHandler.do_GET</code> returns HTML at <code>/</code> and JSON at <code>/api/status</code>. A background thread runs <code>serve_forever</code>, while the UDP receive loop remains in the main server worker. The browser draws cards and metric bars using the JSON response.</p>
+<div class="note warn"><strong>Dashboard implementation detail:</strong> Its field named <code>active_alerts</code> is actually populated from <code>alert_history[-5:]</code> (most recent records); it is not a filtered list of currently active alert states. The page contains fixed 10 Mbps / queue labels rather than querying OVS. Do not present those labels as live switch measurements.</div>
+<h3>YAML controls central policy</h3><p><code>load_config()</code> calls <code>yaml.safe_load</code> and validates mandatory sections and invariants: port 1–65535; positive agent interval and silence multiplier; all thresholds present; and <code>warning &lt; critical</code>. Invalid config raises <code>ConfigError</code>.</p>
+<div class="grid2"><div class="panel"><h3>Defaults worth memorizing</h3><ul class="compact-list"><li>UDP: <code>0.0.0.0:5005</code></li><li>Agent: 1-second interval</li><li>Silence: 3 × interval</li><li>Alert cooldown: 5 seconds</li><li>Alert hysteresis: 2</li><li>DSCP urgent: 46 / TOS 0xB8</li><li>Ryu: port 6633</li><li>SDN stats poll: 2 seconds</li></ul></div><div class="panel"><h3>Logging</h3><p><code>setup_logger()</code> wraps standard Python logging in a <code>RateLimitedLogger</code> to prevent repeated parse/network warnings from flooding the console. <code>RateLimitedLogger.should_log()</code> uses a monotonic time window and a max burst (default 5 per second).</p><p class="mini">Not every YAML logging key is wired into every instantiated logger; inspect the call sites before claiming all settings affect every module.</p></div></div>
+</section>
+
+<section id="experiments" class="chapter" data-title="benchmarks experiments latency CDF p95 congestion proxy failure scalability results bandwidth">
+<div class="chapter-head"><div><span class="chapter-index">12 · Performance evaluation</span><h2>Experiments, measurements, graphs and honest interpretation</h2></div><label class="done-toggle"><input type="checkbox" data-done="experiments"> I can explain this</label></div>
+<div class="sourcebar"><a class="file-link" href="../experiments/run_latency_test.py">Latency script</a><a class="file-link" href="../experiments/run_congestion_test.py">Congestion script</a><a class="file-link" href="../experiments/run_failure_test.py">Failure script</a><a class="file-link" href="../experiments/run_scalability_test.py">Scale script</a><a class="file-link" href="../experiments/plot_results.py">Plot script</a></div>
+<p>The rubric requires <strong>multiple conditions</strong>, meaningful metrics and a suitable baseline. Explain not only the graphs, but <em>how every sample was produced</em> and whether the experiment used a real OpenFlow switch or a local software model.</p>
+<div class="table-wrap"><table><thead><tr><th>Experiment</th><th>Code path</th><th>Measures</th><th>Actual environment</th></tr></thead><tbody>
+<tr><td>Baseline delay</td><td><code>run_latency_test.py</code></td><td>One-way delay and alert timestamp delta (mean, std, p50, p95, p99, max).</td><td>Localhost threaded UDP agents/server, no Mininet.</td></tr>
+<tr><td>Congestion ON vs OFF</td><td><code>run_congestion_test.py</code></td><td>Critical/normal drop estimates, delay, alert latency.</td><td><strong>Python CongestedBottleneckProxy</strong>, not Ryu or real OVS queues.</td></tr>
+<tr><td>Failure/recovery</td><td><code>run_failure_test.py</code></td><td>Time-to-detect (TTD), time-to-recover (TTR).</td><td>Localhost process stop and simulated silence/packet return.</td></tr>
+<tr><td>Scale N=5..80</td><td><code>run_scalability_test.py</code></td><td>Packets/s, packet loss estimate, delay, CPU, alert latency.</td><td>Threaded simulated agents on localhost; <code>psutil.cpu_percent</code> samples host-wide CPU.</td></tr>
+<tr><td>Plots + wire overhead</td><td><code>plot_results.py</code></td><td>PNG figures and HEALTH/HEARTBEAT byte counts.</td><td>Analysis of generated CSV and sample encoded payloads.</td></tr>
+</tbody></table></div>
+<h3>Benchmark definitions to memorize</h3>
+<div class="formula">Throughput (pps) = received packet count / test duration</div>
+<div class="formula">p95 delay = 95th percentile of observed delays (95% of samples ≤ this value)</div>
+<div class="formula">TTD = timestamp when server marks DOWN − estimated start of failure</div>
+<div class="formula">TTR = timestamp when server marks UP − timestamp when sending resumes</div>
+<div class="formula">Wire bit rate ≈ (payload bytes + Ethernet/IP/UDP header bytes) × 8 / reporting interval</div>
+<h3>What current results files say</h3>
+<p class="mini">Values below are already committed under <code>results/</code>. Treat them as stored outputs from previous experiments, not measurements verified during this guide's creation.</p>
+<div class="table-wrap"><table><thead><tr><th>Metric</th><th>Stored result</th><th>Correct interpretation</th></tr></thead><tbody>
+<tr><td>Latency baseline mean</td><td>0.318 ms</td><td>From localhost simulation (<code>results/latency_results_summary.csv</code>).</td></tr>
+<tr><td>Latency baseline p95</td><td>0.447 ms</td><td>95% of logged delay samples at/below this time.</td></tr>
+<tr><td>Congestion critical loss: OFF</td><td>56.67%</td><td>Software proxy FIFO baseline with 12 Mbps generated background load.</td></tr>
+<tr><td>Congestion critical loss: ON</td><td>0.00%</td><td>Software proxy's high-priority queue protected critical reports in these stored runs.</td></tr>
+<tr><td>Congestion critical delay p95: OFF → ON</td><td>30.75 → 1.48 ms</td><td>Proxy-model comparison, not yet proof of live OVS QoS performance.</td></tr>
+<tr><td>At 80 agents, 0.5-second interval</td><td>184.2 packets/s; 0% estimated loss</td><td>Localhost threaded scenario in <code>results/scalability_results.csv</code>.</td></tr>
+<tr><td>Sample HEALTH wire size</td><td>420 bytes</td><td>378-byte serialized sample JSON plus assumed 42-byte Ethernet/IPv4/UDP headers.</td></tr>
+<tr><td>Sample HEARTBEAT wire size</td><td>148 bytes</td><td>106-byte sample JSON plus 42-byte headers.</td></tr>
+</tbody></table></div>
+<div class="two-up">
+<figure class="figure"><a href="../results/congestion_comparison.png"><img src="../results/congestion_comparison.png" loading="lazy" alt="Bar charts for critical versus normal packet loss and 95th percentile delay with proxy priority off versus on"></a><figcaption>Congestion results from the Python bottleneck proxy; linked PNG is in the repository's <code>results/</code> folder.</figcaption></figure>
+<figure class="figure"><a href="../results/scalability_trends.png"><img src="../results/scalability_trends.png" loading="lazy" alt="Scalability trend plots for packet throughput, CPU, delay and loss versus agent count"></a><figcaption>Scalability behavior across node counts and reporting intervals.</figcaption></figure>
+</div>
+<h3>What exactly happens in the congestion benchmark?</h3><ol><li>A UDP proxy listens on localhost and forwards toward the real monitor server through an in-process queue.</li><li>With priority OFF, all datagrams compete in one FIFO queue (30-packet capacity in <code>run_scenario</code>).</li><li>With priority ON, JSON packets marked <code>CRITICAL</code> go into <code>q_high</code>; normal and background into <code>q_low</code>. A transmit loop services high queue first.</li><li>A background sender aims for 12 Mbps of 1200-byte UDP payloads while emulated link capacity is 10 Mbps; the proxy sleeps to model serialization time.</li><li>The script computes loss/delay and writes OFF/ON rows to CSV.</li></ol>
+<div class="note red"><h4>Be honest about methodology</h4><p>The proxy reads the <code>priority</code> field <em>inside JSON</em>; it does not inspect IP DSCP and it never installs an OpenFlow rule. Its strict-priority queues are a useful controlled model, but they are <strong>not a measured Mininet/OVS experiment</strong>. For the strongest D2 evaluation, repeat OFF/ON load through live Mininet with actual Ryu/OVS counters and matching test conditions.</p></div>
+<h3>Failure study nuances</h3><p><code>measure_crash_failure</code> stops an agent, then restarts one with the same ID. The “link failure” and “partial loss” helpers stop sending datagrams to simulate silence; neither invokes a real Mininet link-down operation or randomly discards a subset of packets. The first packet in those helpers omits <code>interval</code>, so the registry uses its default 1-second interval and typically detects silence after roughly 3 seconds, regardless of the helper's nominal <code>interval=0.5</code> argument.</p>
+<h3>Safeguards when presenting results</h3><ul><li>Repeat each scenario, log mean and spread, keep test duration and offered load comparable.</li><li>Show the baseline definition and whether an experiment is a mock, emulator, or live OpenFlow trial.</li><li>Check missing-data behavior: latency, congestion and scalability scripts contain hardcoded fallback sample values if expected measurements are absent. <strong>Do not report fallback values as measured results.</strong></li><li>Graph/CSV claims must specify units and measurement origin. P95 tail delay can be more informative than mean under congestion.</li></ul>
+</section>
+
+<section id="tests" class="chapter" data-title="unit integration testing pytest coverage robustness reproducibility">
+<div class="chapter-head"><div><span class="chapter-index">13 · Verification</span><h2>Tests: what is verified, what remains to verify</h2></div><label class="done-toggle"><input type="checkbox" data-done="tests"> I can explain this</label></div>
+<p>There are <strong>65 named pytest test functions</strong> in the tracked <code>tests/</code> files at review time. Tests target schema checks, thresholds, lifecycle events, UDP robustness, agent behavior, local integration and Ryu controller logic with mocks.</p>
+<div class="table-wrap"><table><thead><tr><th>File / family</th><th>Understand these tests</th></tr></thead><tbody>
+<tr><td><code>test_protocol.py</code></td><td>Round-trip encoding, missing ID, invalid JSON, invalid metrics, payload &gt;1400 bytes, illegal sequence.</td></tr>
+<tr><td><code>test_agent.py</code> &amp; <code>test_stats_collector.py</code></td><td>Invalid CLI params, TOS marking, simulated spikes, collection fallback, socket failures.</td></tr>
+<tr><td><code>test_node_registry.py</code></td><td>Registration, silence DOWN, recovery UP, sequence gaps, duplicates, reordering, restart.</td></tr>
+<tr><td><code>test_alert_engine.py</code> &amp; <code>test_config_loader.py</code></td><td>Threshold boundaries, cooldown, hysteresis, invalid YAML/config.</td></tr>
+<tr><td><code>test_server_udp.py</code> &amp; <code>test_robustness.py</code></td><td>Malformed bursts, concurrent senders, port collision, clean shutdown, clock skew.</td></tr>
+<tr><td><code>test_integration.py</code></td><td>Multiple localhost agents, alerts, agent kill/recovery, congestion proxy, server restart, 20-agent load.</td></tr>
+<tr><td><code>test_sdn_controller.py</code></td><td>Mocked OpenFlow features, proactive rules, throttle, quarantine, stats triggers.</td></tr>
+<tr><td><code>test_coverage_boost.py</code></td><td>Additional branches and parser/output coverage.</td></tr>
+</tbody></table></div>
+<div class="codebox"><div class="codebar"><span>Run the test suite from the repository root</span><button type="button" class="copy">Copy</button></div><pre><code>python -m pytest tests/ -v \
+  --cov=common --cov=server --cov=agent \
+  --cov-report=term-missing
+
+# Run narrower tests while learning:
+python -m pytest tests/test_protocol.py -v
+python -m pytest tests/test_node_registry.py -v
+python -m pytest tests/test_alert_engine.py -v</code></pre></div>
+<div class="note warn"><strong>What unit tests are not:</strong> A mocked <code>MagicMock</code> datapath proves that your controller <em>attempts</em> to send a FlowMod. It does not independently prove that OVS installed the rule, the egress queue exists, real packets matched DSCP 46 or latency improved. Those require live Mininet verification.</div>
+<h3>Live evidence checklist for full SDN marks</h3>
+<ul class="checklist"><li>Ryu started and logs a connected OpenFlow 1.3 switch.</li><li>Mininet hosts can reach <code>h_server</code> and send UDP reports.</li><li><code>ovs-ofctl -O OpenFlow13 dump-flows s1</code> shows DSCP match and queue-selection actions.</li><li><code>ovs-vsctl list qos</code> and <code>ovs-vsctl list queue</code> show configured queues on the intended port.</li><li>Controller receives port-stats replies, logs utilization and installs/removes priority-80 rule under a reproducible load change.</li><li>Actual switch flow/queue counters corroborate critical packet traffic while the server records metrics.</li><li>Repeated baseline versus QoS trials use the same topology, offered load and report interval.</li></ul>
+</section>
+
+<section id="demo" class="chapter" data-title="setup commands installation run demo Mininet Ryu OVS dashboard reproduce">
+<div class="chapter-head"><div><span class="chapter-index">14 · Do it live</span><h2>How to run and narrate a demo</h2></div><label class="done-toggle"><input type="checkbox" data-done="demo"> I can explain this</label></div>
+<h3>Preparation and platform</h3><p>Use Linux (Ubuntu is a common Mininet choice), ideally a Python environment supported by the installed Ryu/eventlet stack. The repository pins Ryu only when Python is <strong>below 3.11</strong>; Python 3.10 is a reasonable starting choice. Installing packages does not install or configure the whole OVS kernel/Mininet toolchain.</p>
+<div class="codebox"><div class="codebar"><span>At project root · package setup (Linux)</span><button type="button" class="copy">Copy</button></div><pre><code>python3.10 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+
+# Ubuntu/Debian system binaries for the SDN part:
+sudo apt update
+sudo apt install -y mininet openvswitch-switch iperf
+
+# Verify availability:
+which ryu-manager
+which mn
+which ovs-vsctl
+python -m pytest tests/test_protocol.py -v</code></pre></div>
+<div class="note warn"><strong>Dependency reality:</strong> <code>ryu-manager</code>, OVS and Mininet need compatible OS/Python versions and may require installation adjustments depending on the distribution. Verify your environment rather than assuming every command works on all laptops. A local Python-only demo can run without the Mininet binaries.</div>
+<h3>Option A — safest first demo (no Mininet)</h3>
+<div class="codebox"><div class="codebar"><span>Terminal 1 · start server and HTTP dashboard</span><button type="button" class="copy">Copy</button></div><pre><code>python server/monitor_server.py --host 127.0.0.1 --port 5005 \
+  --web-port 8080 --dashboard-interval 2</code></pre></div>
+<div class="codebox"><div class="codebar"><span>Terminal 2 and 3 · agents</span><button type="button" class="copy">Copy</button></div><pre><code>python agent/health_agent.py --id h1 --server 127.0.0.1 \
+  --port 5005 --interval 1 --mode simulated --sim-pattern normal
+
+# In another terminal:
+python agent/health_agent.py --id h2 --server 127.0.0.1 \
+  --port 5005 --interval 1 --mode simulated --sim-pattern spike</code></pre></div>
+<p>Open <code>http://localhost:8080</code>. Observe the live node cards, counters and alerts. To demonstrate a failure, stop h2 and note that its UP state changes to DOWN after the silence threshold; restarting h2 with the same ID returns it to UP. This proves the UDP app and registry behavior, not the SDN datapath.</p>
+<h3>Option B — full Mininet/Ryu demonstration</h3>
+<div class="codebox"><div class="codebar"><span>Terminal 1 · controller (from project root with suitable Ryu environment)</span><button type="button" class="copy">Copy</button></div><pre><code>ryu-manager sdn/ryu_controller.py --ofp-tcp-listen-port 6633</code></pre></div>
+<div class="codebox"><div class="codebar"><span>Terminal 2 · Mininet, with sudo/root privileges</span><button type="button" class="copy">Copy</button></div><pre><code>sudo -E python3 sdn/topology.py --hosts 5 --interval 1 \
+  --bw 10 --mode simulated
+
+# In the Mininet CLI:
+nodes
+net
+h1 ping -c 2 10.0.0.100
+sh ovs-ofctl -O OpenFlow13 dump-flows s1
+sh ovs-vsctl list qos
+sh ovs-vsctl list queue</code></pre></div>
+<p>Topology automatically launches the server on the Mininet server host and launches all agents in the virtual hosts. By default the topology runs an interactive Mininet CLI until <code>exit</code>, then calls <code>net.stop()</code> and <code>mn -c</code>.</p>
+<div class="note warn"><strong>Do not guess the controller port or wrong venv:</strong> <code>config.yaml</code> uses 6633. The installed version of <code>ryu-manager</code> must support the selected CLI flag. Run the Ryu controller before launching Mininet; if OVS fails to connect, inspect logs and process ports.</div>
+<h3>Option C — interactive menu the repository provides</h3>
+<div class="codebox"><div class="codebar"><span>demo.py entrypoint</span><button type="button" class="copy">Copy</button></div><pre><code>python demo.py
+# Menu:
+# 1 Tests                  2 Local live demo
+# 3 Failure and recovery   4 Web dashboard
+# 5 D2 showcase            6 Benchmarks and plots
+# 7 Stored CSV summary     8 Markdown guide path</code></pre></div>
+<p><code>demo.py</code> option 5 is a <strong>hybrid demonstration</strong>: congestion uses the local software proxy; reactive OpenFlow mitigation and quarantine use <code>MagicMock</code> objects. It does not start a real Mininet switch for those calls. Option 6 regenerates benchmark CSVs/figures (and may overwrite existing results).</p>
+<h3>A strong 5-minute oral walkthrough</h3>
+<ol class="timeline">
+<li><strong>0:00–0:40 — problem.</strong> State objective, why telemetry needs reliability awareness and timely critical reporting.</li>
+<li><strong>0:40–1:20 — architecture.</strong> Show host → UDP → OVS → server and Ryu control plane.</li>
+<li><strong>1:20–2:05 — sockets.</strong> Explain JSON schema, <code>sendto</code>/<code>recvfrom</code>, sequence, validation and multi-agent registry.</li>
+<li><strong>2:05–3:00 — SDN.</strong> Point to DSCP 46 and OpenFlow queue rule, then show actual switch flow/queue output if available.</li>
+<li><strong>3:00–3:40 — failure.</strong> Stop a reporting agent; show DOWN and then recovered UP.</li>
+<li><strong>3:40–4:25 — comparison.</strong> State OFF/ON experiment method and units without calling software-proxy results “measured OpenFlow performance”.</li>
+<li><strong>4:25–5:00 — close.</strong> Explain tests, implementation limits, next improvements, take viva questions.</li>
+</ol>
+</section>
+
+<section id="limitations" class="chapter" data-title="limitations caveats fixes bugs flaws evidence security improvements">
+<div class="chapter-head"><div><span class="chapter-index">15 · Technical honesty</span><h2>Limitations the examiner may notice — and how to improve them</h2></div><label class="done-toggle"><input type="checkbox" data-done="limitations"> I can explain this</label></div>
+<p>Knowing the boundaries of your implementation is often more impressive than pretending it is production-ready. These observations come from the <em>actual source code</em>.</p>
+<div class="table-wrap"><table><thead><tr><th>Current behavior / caveat</th><th>Good explanation or improvement</th></tr></thead><tbody>
+<tr><td>Congestion comparison uses <code>CongestedBottleneckProxy</code>, not real OVS.</td><td>Label it a software-model baseline. Add real Mininet QoS ON/OFF experiments and export OVS flow/queue stats.</td></tr>
+<tr><td>Dynamic throttle match is broad (<code>ip_proto=17</code>).</td><td>Refine rule to exclude monitoring UDP port or match specifically known bulk sources/ports. Confirm normal monitoring is not inadvertently demoted.</td></tr>
+<tr><td>8/4 Mbps trigger hard-coded; YAML lists bandwidth/utilization values.</td><td>Read config in controller; derive thresholds from capacity and desired fraction; add per-port handling.</td></tr>
+<tr><td>Quarantine method isn't wired to an automatic attacker detector.</td><td>Add traffic-anomaly policy and a trusted rule for who may be quarantined; log reasons and validate false positives.</td></tr>
+<tr><td><code>throttled_ports</code> can outlive a timed-out flow.</td><td>Reconcile state against switch flow entries or avoid idle-timeout mismatch; reinstall upon continued congestion.</td></tr>
+<tr><td>One-way delay uses independent wall clocks.</td><td>Synchronize via NTP/PTP for multi-host tests, or estimate RTT with echo and a defined methodology.</td></tr>
+<tr><td>Agent calls packet CRITICAL at WARNING thresholds.</td><td>Separate transport importance from alert severity in naming or adjust classification policy.</td></tr>
+<tr><td>Registry retains every seen sequence in an unbounded set.</td><td>Use a bounded sliding window and reconcile late-arriving packets in loss estimates.</td></tr>
+<tr><td>“Link failure” benchmark is silence, not <code>link down</code>.</td><td>Use Mininet <code>link</code> or Linux traffic control for live link failure and partial loss trials.</td></tr>
+<tr><td>Plots can use hardcoded fallback data on empty samples.</td><td>Fail experiment loudly with invalid/empty data rather than silently inserting plausible numbers.</td></tr>
+<tr><td>Scalability CPU metric is <code>psutil.cpu_percent()</code> (system-wide).</td><td>Measure monitor-server process CPU via <code>psutil.Process(pid).cpu_percent()</code>, plus machine-wide metrics separately.</td></tr>
+<tr><td>Dashboard's “active alerts” show last five history entries; queue banner is static.</td><td>Expose live active-state query and controller queue telemetry; label historical events separately.</td></tr>
+<tr><td>UDP node IDs are unauthenticated and browser renders node IDs into <code>innerHTML</code>.</td><td>For production, authenticate/report-sign clients, validate IDs and render untrusted strings as text rather than HTML.</td></tr>
+<tr><td>Server opens CSV output in write mode every run.</td><td>Rotate or append logs safely; include run IDs and experiment metadata.</td></tr>
+</tbody></table></div>
+<div class="note good"><strong>Strong viva framing:</strong> “We built an application prototype, implemented switch-side policy logic and used deterministic software benchmarks. The next validation step is to measure the same ON/OFF comparison through actual Mininet queues, because a mocked controller call or a local proxy is not equivalent to end-to-end switch QoS evidence.”</div>
+</section>
+
+<section id="viva" class="chapter" data-title="viva questions answers interview oral defense why how">
+<div class="chapter-head"><div><span class="chapter-index">16 · Practice answering</span><h2>Viva questions — click to reveal answers</h2></div><label class="done-toggle"><input type="checkbox" data-done="viva"> I can explain this</label></div>
+<p class="lead">Answer each out loud <em>before</em> opening it. Aim for “definition → where in our code → why it matters → limitation.” These cover both the official rubric and likely follow-ups.</p>
+<h3>A. Problem and system</h3>
+<details class="details"><summary><span class="q-number">01.</span> What is the goal of the project?</summary><div class="answer">Monitor multiple remote nodes' performance using UDP JSON health reports; detect overload and silence; prioritize urgent telemetry using SDN in Mininet.</div></details>
+<details class="details"><summary><span class="q-number">02.</span> What are the main components?</summary><div class="answer">StatsCollector + HealthAgent (senders), common protocol, MonitorServer, NodeRegistry, AlertEngine, optional web dashboard, Mininet topology, OVS switch and Ryu controller.</div></details>
+<details class="details"><summary><span class="q-number">03.</span> What is centralized in your design?</summary><div class="answer">The health state, alert decisions and CSV logs are on one central monitoring server. Agents independently sample and send. Ryu centrally controls switch forwarding policy, which is a distinct role.</div></details>
+<details class="details"><summary><span class="q-number">04.</span> How many Mininet hosts are there by default?</summary><div class="answer">Five agent hosts h1..h5, plus one server host h_server, and one switch s1. The agent count can be changed via <code>--hosts</code>.</div></details>
+<details class="details"><summary><span class="q-number">05.</span> How does an application priority influence the network?</summary><div class="answer">Agent maps JSON priority CRITICAL to <code>IP_TOS=0xB8</code> (DSCP 46). An OpenFlow rule matches DSCP and UDP port and assigns OVS queue 2.</div></details>
+<h3>B. UDP, socket and protocol theory</h3>
+<details class="details"><summary><span class="q-number">06.</span> Why choose UDP rather than TCP?</summary><div class="answer">Periodic telemetry emphasizes fresh readings, low overhead and independent datagrams. It can tolerate some loss and detect gaps at the application layer. TCP would add reliable ordered delivery but may retransmit stale information.</div></details>
+<details class="details"><summary><span class="q-number">07.</span> What is a socket?</summary><div class="answer">An OS interface for network communication. Here <code>socket(AF_INET, SOCK_DGRAM)</code> represents an IPv4 UDP endpoint.</div></details>
+<details class="details"><summary><span class="q-number">08.</span> What does UDP port 5005 do?</summary><div class="answer">It identifies the receiving telemetry service on the server IP; it is a configurable application port, not a predefined health-monitoring standard.</div></details>
+<details class="details"><summary><span class="q-number">09.</span> What is the difference between <code>sendto</code> and <code>recvfrom</code>?</summary><div class="answer"><code>sendto</code> sends a datagram to an IP/port pair; <code>recvfrom</code> receives one datagram and returns its bytes and source address.</div></details>
+<details class="details"><summary><span class="q-number">10.</span> How do you detect packet loss if UDP has no acknowledgements?</summary><div class="answer">Each agent sends incrementing sequence numbers. Registry estimates missing packets from gaps, e.g. seq2 followed by seq5 suggests two missing. It is an estimate, not a perfect loss detector under reordering.</div></details>
+<details class="details"><summary><span class="q-number">11.</span> How do you handle duplicate and out-of-order packets?</summary><div class="answer">Registry keeps a seen-sequence set; repeated sequences increment duplicate count, older unseen sequences increment out-of-order count unless the decrease looks like a restart.</div></details>
+<details class="details"><summary><span class="q-number">12.</span> Why use a timestamp in every report?</summary><div class="answer">Server estimates one-way delay as receive timestamp minus sent timestamp and measures reported alert delay. It needs clock synchronization for meaningful comparisons across machines.</div></details>
+<details class="details"><summary><span class="q-number">13.</span> Why use JSON rather than raw binary?</summary><div class="answer">Readable fields, easy debugging and versioned schema with standard encoding. Tradeoff: bigger packets and parsing overhead compared with fixed-format binary.</div></details>
+<details class="details"><summary><span class="q-number">14.</span> What is the 1400-byte cap protecting against?</summary><div class="answer">Excessive datagram payloads and likely IPv4 fragmentation on 1500-byte Ethernet paths. The protocol validates size before sending and on decoding.</div></details>
+<details class="details"><summary><span class="q-number">15.</span> What happens on invalid JSON or CPU = 150?</summary><div class="answer"><code>common.protocol.decode/validate</code> raises <code>ProtocolError</code>. MonitorServer drops that datagram, increments bad packet count, rate-limits the warning and keeps receiving.</div></details>
+<details class="details"><summary><span class="q-number">16.</span> What is a HEARTBEAT for?</summary><div class="answer">It keeps evidence of node liveness even when full metric collection fails. HEARTBEAT may omit metrics, unlike HEALTH/ALERT.</div></details>
+<details class="details"><summary><span class="q-number">17.</span> Can a server handle many agents on one UDP socket?</summary><div class="answer">Yes. The datagram contains node ID and the socket supplies source address; one nonblocking server loop processes reports from many agents on port 5005.</div></details>
+<h3>C. Monitoring and alerts</h3>
+<details class="details"><summary><span class="q-number">18.</span> What does psutil collect?</summary><div class="answer">CPU utilization, memory usage, process iterator data and network I/O counters. For consistent Mininet demos, the repository often uses deterministic simulated metrics.</div></details>
+<details class="details"><summary><span class="q-number">19.</span> What are the available simulated patterns?</summary><div class="answer">Normal, spike, ramp-up and constant-high. Spike uses 95% CPU, 92% RAM and 550 processes at configured intervals.</div></details>
+<details class="details"><summary><span class="q-number">20.</span> What marks a node DOWN?</summary><div class="answer">The registry finds time since last valid report greater than <code>silence_multiplier × node.interval</code>. Defaults yield about 3 seconds for a 1-second sender.</div></details>
+<details class="details"><summary><span class="q-number">21.</span> How does the project detect recovery?</summary><div class="answer">When a valid new packet arrives for a node currently DOWN, it transitions to UP and emits NODE_RECOVERED.</div></details>
+<details class="details"><summary><span class="q-number">22.</span> Define alert severity and agent priority.</summary><div class="answer">Server severity is based on both warning and critical thresholds. Agent packet priority is CRITICAL from the warning level upward for CPU/RAM/process count; they are intentionally/actually different classifications in this code.</div></details>
+<details class="details"><summary><span class="q-number">23.</span> Why hysteresis?</summary><div class="answer">It prevents rapid clearing/re-triggering around the warning threshold by requiring the value to fall below a lower clear threshold (warning minus 2).</div></details>
+<details class="details"><summary><span class="q-number">24.</span> Why cooldown?</summary><div class="answer">Repetitive high metrics shouldn't emit fresh alerts on every packet. The engine waits 5 seconds for the same state/severity, but severity transitions can alert immediately.</div></details>
+<details class="details"><summary><span class="q-number">25.</span> What is the difference between packet loss and node failure?</summary><div class="answer">Loss is inferred missing sequence numbers across packets that still arrive. Node failure is inferred sustained silence beyond the liveness threshold; a node can be UP with nonzero loss.</div></details>
+<h3>D. SDN, OpenFlow and Mininet</h3>
+<details class="details"><summary><span class="q-number">26.</span> Define software-defined networking.</summary><div class="answer">Control and forwarding are logically separated: a software controller (Ryu) decides rules; an OpenFlow switch (OVS) applies them to packets.</div></details>
+<details class="details"><summary><span class="q-number">27.</span> What is OpenFlow 1.3 used for?</summary><div class="answer">The Ryu app talks to OVS using OpenFlow 1.3, sending FlowMod rules and requesting/receiving port/flow statistics.</div></details>
+<details class="details"><summary><span class="q-number">28.</span> What is Ryu?</summary><div class="answer">A Python SDN controller framework. This code subclasses <code>RyuApp</code> and handles switch-features, PacketIn and statistics reply events.</div></details>
+<details class="details"><summary><span class="q-number">29.</span> What does a flow table entry contain?</summary><div class="answer">A match over packet/header/metadata fields, numeric priority, actions/instructions, optional timeouts and counters. Highest-priority matching flow is selected.</div></details>
+<details class="details"><summary><span class="q-number">30.</span> What is the table-miss rule?</summary><div class="answer">Priority-0 catch-all flow that sends otherwise-unmatched packets to the controller so it can learn/handle them.</div></details>
+<details class="details"><summary><span class="q-number">31.</span> Why does controller need PacketIn?</summary><div class="answer">For basic L2 learning: on unknown traffic, learn source MAC-to-port and either flood or install an output rule for known destinations.</div></details>
+<details class="details"><summary><span class="q-number">32.</span> What is DSCP 46?</summary><div class="answer">The Expedited Forwarding DSCP class. Agent sends the IPv4 TOS byte <code>0xB8</code> so the six DSCP bits equal 46 (with ECN bits zero).</div></details>
+<details class="details"><summary><span class="q-number">33.</span> Why is <code>IP_TOS=184</code> rather than 46?</summary><div class="answer">The DSCP field occupies the upper six bits of the IPv4 DS/TOS byte. Shift 46 left by two: <code>46 × 4 = 184 = 0xB8</code>.</div></details>
+<details class="details"><summary><span class="q-number">34.</span> What do queues 0, 1 and 2 mean?</summary><div class="answer">Configured egress queue classes: best effort, normal monitoring and critical monitoring, with configured minima of 1/3/5 Mbps on the 10 Mbps server link.</div></details>
+<details class="details"><summary><span class="q-number">35.</span> Does a higher OpenFlow priority mean the same thing as queue 2?</summary><div class="answer">No. OpenFlow priority decides which rule wins; <code>SetQueue(2)</code> selects an egress scheduling queue. JSON priority is another independent application field.</div></details>
+<details class="details"><summary><span class="q-number">36.</span> How is congestion detected dynamically?</summary><div class="answer">The controller polls port transmitted bytes at intervals, computes <code>8 × Δbytes / Δseconds</code>, and installs a priority-80 UDP Queue-0 rule at ≥8 Mbps.</div></details>
+<details class="details"><summary><span class="q-number">37.</span> When is congestion mitigation removed?</summary><div class="answer">When measured TX rate drops below 4 Mbps and the port is marked throttled. This creates a hysteresis band between 4 and 8 Mbps.</div></details>
+<details class="details"><summary><span class="q-number">38.</span> What traffic does priority-80 throttle match?</summary><div class="answer"><em>All IPv4 UDP</em>. It can override the normal-monitoring priority-50 rule, but not the critical priority-100 rule. It is not restricted to bulk-only flows.</div></details>
+<details class="details"><summary><span class="q-number">39.</span> What is quarantine in this project?</summary><div class="answer">Installing a higher-priority IPv4-source DROP rule via <code>quarantine_host</code>. It is an available controller operation, but automatic rogue detection is not wired into the primary flow.</div></details>
+<details class="details"><summary><span class="q-number">40.</span> What is Mininet and why use it?</summary><div class="answer">A virtual Linux network emulator used to create multiple hosts and shaped links with controllable bandwidth/delay, plus an OVS switch controlled by Ryu, without needing physical networking hardware.</div></details>
+<details class="details"><summary><span class="q-number">41.</span> Where is the bottleneck?</summary><div class="answer">Between switch s1 and the monitoring server h_server, at 10 Mbps. Agent-to-switch links are set to 100 Mbps.</div></details>
+<details class="details"><summary><span class="q-number">42.</span> How do you confirm a QoS rule was really installed?</summary><div class="answer">During a live Mininet run, inspect <code>ovs-ofctl -O OpenFlow13 dump-flows s1</code>, OVS Queue/QoS config, controller log and traffic/flow counters; a mocked call alone is insufficient.</div></details>
+<h3>E. Performance, robustness and critical thinking</h3>
+<details class="details"><summary><span class="q-number">43.</span> Explain the difference between mean and p95.</summary><div class="answer">Mean is arithmetic average. P95 is the value at/below which 95% of observations fall, useful for seeing tail latency and congestion spikes.</div></details>
+<details class="details"><summary><span class="q-number">44.</span> What are TTD and TTR?</summary><div class="answer">Time to detect a failure and time to recover after reports resume, respectively. The project polls the server's registry state to measure them.</div></details>
+<details class="details"><summary><span class="q-number">45.</span> How does the Priority OFF/ON benchmark work?</summary><div class="answer">A Python localhost UDP proxy uses a shared FIFO queue for OFF and a two-tier queue for ON, with a generated 12 Mbps background stream across an emulated 10 Mbps bottleneck.</div></details>
+<details class="details"><summary><span class="q-number">46.</span> Does the congestion benchmark prove actual Ryu QoS performance?</summary><div class="answer">No. It evaluates a software queue model based on JSON priority. Separate live Mininet/Ryu/OVS measurement is needed to establish actual OpenFlow queue behavior.</div></details>
+<details class="details"><summary><span class="q-number">47.</span> What are the limitations of one-way latency?</summary><div class="answer">Sender and receiver wall clocks may drift. The current code clamps negative/large samples, but clock mismatch can still make the metric misleading.</div></details>
+<details class="details"><summary><span class="q-number">48.</span> How does this project scale with number of nodes?</summary><div class="answer">Each node adds roughly <code>1/interval</code> reports per second. Tests vary 5–80 local agents; actual capacity also depends on CPU, link, packet size, disk writes, scheduler and environment.</div></details>
+<details class="details"><summary><span class="q-number">49.</span> How does the project handle a malicious packet?</summary><div class="answer">Malformed payloads are rejected via schema validation and warnings are rate-limited. No authentication or automatic source quarantine is present in the UDP receive path.</div></details>
+<details class="details"><summary><span class="q-number">50.</span> What would you improve first?</summary><div class="answer">Validate QoS through real Mininet counters and comparable ON/OFF trials; narrow throttle matches, wire live config thresholds, bound sequence history, add authentication and tighten experiment methodology.</div></details>
+</section>
+
+<section id="plan" class="chapter" data-title="study roadmap learning schedule tasks readiness">
+<div class="chapter-head"><div><span class="chapter-index">17 · Learning order</span><h2>A practical plan to master this project</h2></div><label class="done-toggle"><input type="checkbox" data-done="plan"> I can explain this</label></div>
+<p class="lead">Do not memorize code line-by-line. Learn what each module <em>receives, transforms and outputs</em>, then practice tracing the same report end-to-end.</p>
+<div class="grid2">
+<div class="panel"><h3>Pass 1 · Understand the core</h3><ol><li>Read chapters 1–4: objective, rubric, architecture, UDP vs TCP, SDN.</li><li>Open <code>common/protocol.py</code>, then <code>health_agent.py</code>.</li><li>Trace one CPU spike through <code>monitor_server.py</code> and <code>alert_engine.py</code>.</li><li>Run two localhost agents and make one stop and recover.</li></ol></div>
+<div class="panel"><h3>Pass 2 · Own the SDN story</h3><ol><li>Read <code>topology.py</code>, identify every host, switch, link and bottleneck.</li><li>Draw the matching rules and queue table without looking.</li><li>Explain port-rate calculation, priority 80 and queue effects.</li><li>Check live OVS rules if environment is available.</li></ol></div>
+<div class="panel"><h3>Pass 3 · Be able to defend evidence</h3><ol><li>Read the four experiment scripts and inspect the CSV/plots.</li><li>Explain baseline vs proposed approach and p95.</li><li>Distinguish localhost proxy from actual OpenFlow evidence.</li><li>Run pytest and understand at least one test from each family.</li></ol></div>
+<div class="panel"><h3>Pass 4 · Viva rehearsal</h3><ol><li>Deliver the 30-second pitch without notes.</li><li>Answer viva questions 1–50 out loud.</li><li>Practice the 5-minute script while navigating the real project.</li><li>Know three limitations and three realistic improvements.</li></ol></div>
+</div>
+<h3>Ready-for-evaluation checklist</h3>
+<ul class="checklist"><li>I can draw the full architecture and name each process/file.</li><li>I can explain the UDP JSON fields, port 5005, encode/decode and 1400-byte cap.</li><li>I can calculate sequence-gap loss, timeout and timestamp-based delay.</li><li>I know the exact 70/90 CPU, 75/90 RAM and 300/500 process boundaries.</li><li>I can show DSCP 46 = TOS 0xB8 and point to <code>SetQueue(2)</code>.</li><li>I can explain OpenFlow priorities 100/80/50/10 and how they interact.</li><li>I know the 8 Mbps trigger, 4 Mbps clearing condition and 10 Mbps bottleneck.</li><li>I can explain the difference between live SDN flows and a Python proxy benchmark.</li><li>I can reproduce the localhost demo and identify what is required for live Mininet.</li><li>I can explain p95, TTD/TTR, packet loss and limitations without exaggeration.</li></ul>
+</section>
+
+<section id="cheatsheet" class="chapter" data-title="cheat sheet final revision quick reference">
+<div class="chapter-head"><div><span class="chapter-index">18 · Emergency revision</span><h2>The entire project on one revision page</h2></div><label class="done-toggle"><input type="checkbox" data-done="cheatsheet"> I can explain this</label></div>
+<div class="grid2">
+<div class="panel"><h3>Elevator pitch</h3><p>“UDP-based remote health monitoring of multiple simulated nodes. Agents sample and send timestamped JSON, the central server tracks status/loss/delay and alerts, and Ryu programs OpenFlow queues to prioritize DSCP-marked urgent reports on a Mininet bottleneck.”</p></div>
+<div class="panel"><h3>Key ports and IPs</h3><ul><li>Telemetry UDP <strong>5005</strong></li><li>Ryu OpenFlow TCP <strong>6633</strong></li><li>Optional browser HTTP <strong>8080</strong></li><li>Server <strong>10.0.0.100</strong></li><li>Agents <strong>10.0.0.1...N</strong></li></ul></div>
+<div class="panel"><h3>Critical numbers</h3><ul><li>Protocol ≤ <strong>1400 bytes</strong></li><li>Reports every <strong>1 second</strong> by default</li><li>DOWN after <strong>3 × interval</strong></li><li>Alert cooldown <strong>5 s</strong>; hysteresis <strong>2</strong></li><li>DSCP <strong>46</strong> = TOS <strong>0xB8</strong></li><li>Bottleneck <strong>10 Mbps</strong></li><li>Dynamic trigger <strong>8 Mbps</strong>; clear <strong>4 Mbps</strong></li></ul></div>
+<div class="panel"><h3>Rule priorities</h3><ul><li><strong>200</strong> quarantine (drop selected IPv4 source)</li><li><strong>100</strong> critical UDP/5005 DSCP46 → Q2</li><li><strong>80</strong> dynamic all UDP → Q0</li><li><strong>50</strong> normal UDP/5005 DSCP0 → Q1</li><li><strong>10</strong> other UDP → Q0</li><li><strong>1</strong> learned L2; <strong>0</strong> table miss</li></ul></div>
+<div class="panel"><h3>Core source map</h3><ul><li><code>common/protocol.py</code> → schema</li><li><code>agent/*</code> → collect, classify, send</li><li><code>server/monitor_server.py</code> → UDP receiver</li><li><code>server/node_registry.py</code> → loss/liveness</li><li><code>server/alert_engine.py</code> → thresholds</li><li><code>sdn/ryu_controller.py</code> → OpenFlow</li><li><code>sdn/topology.py</code> → Mininet/queues</li><li><code>experiments/*</code> → evaluation</li></ul></div>
+<div class="panel"><h3>Must-say caveats</h3><ul><li>Agent “CRITICAL” priority starts at <em>warning</em> level.</li><li>Proxy benchmark is <em>not</em> real Ryu/OVS QoS proof.</li><li>Dynamic UDP priority-80 rule can demote normal monitoring.</li><li>Cross-machine one-way delay needs clock synchronization.</li><li>Unit tests with mocks ≠ live switch verification.</li></ul></div>
+</div>
+<div class="note good"><strong>Final answer pattern for almost any viva question:</strong> Define the term → name the exact file/function → walk through one concrete packet or threshold → explain why the choice was made → honestly state a limitation or validation method.</div>
+<div class="sourcebar"><a href="SDN-Socket%20Programming-Guidelines_Rubrics.pdf">Official course rubric (authoritative)</a><a href="../config.yaml">Config</a><a href="../demo.py">Demo launcher</a><a href="../results/congestion_results.csv">Stored congestion CSV</a><a href="../results/latency_results_summary.csv">Stored latency CSV</a></div>
+</section>
+
+  </div>
+  <footer class="footer"><strong>Learn the code; don't just memorize the slide.</strong><br>Produced from <code>docs/SDN-Socket Programming-Guidelines_Rubrics.pdf</code>, implementation, tests, configuration and experimental results in this repository. No existing Markdown guide was used as a factual source. All diagrams/examples marked illustrative are explanatory, not live captures.</footer>
+</main>
+</div>
+<script>
+(function(){
+  "use strict";
+  var inputs = Array.prototype.slice.call(document.querySelectorAll('input[data-done]'));
+  var key = 'cn-miniproject-study-guide-progress-v1';
+  var storage = {};
+  try { storage = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch(e){ storage = {}; }
+  function updateProgress(){
+    var count = inputs.filter(function(el){return el.checked;}).length;
+    document.getElementById('progress-fill').style.width = (count/inputs.length*100) + '%';
+    document.getElementById('progress-label').textContent = count + ' of ' + inputs.length + ' chapters completed';
+  }
+  inputs.forEach(function(el){
+    el.checked = !!storage[el.getAttribute('data-done')];
+    el.addEventListener('change',function(){
+      storage[el.getAttribute('data-done')] = el.checked;
+      try { localStorage.setItem(key,JSON.stringify(storage)); }catch(e){}
+      updateProgress();
+    });
+  });
+  updateProgress();
+  var reset = document.getElementById('reset-progress');
+  reset.addEventListener('click',function(){
+    inputs.forEach(function(el){el.checked=false;});
+    storage={}; try{localStorage.removeItem(key);}catch(e){}
+    updateProgress();
+  });
+  document.getElementById('print-guide').addEventListener('click',function(){window.print();});
+  document.getElementById('focus-toggle').addEventListener('click',function(){
+    document.body.classList.toggle('focus-mode');
+    this.textContent = document.body.classList.contains('focus-mode') ? 'Show navigation' : 'Focus view';
+  });
+  document.getElementById('section-search').addEventListener('input',function(){
+    var q=this.value.trim().toLowerCase();
+    document.querySelectorAll('section.chapter').forEach(function(section){
+      var keep = !q || section.textContent.toLowerCase().indexOf(q)>=0 || (section.getAttribute('data-title')||'').indexOf(q)>=0;
+      section.classList.toggle('hidden-by-search',!keep);
+    });
+  });
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var code=btn.parentElement.parentElement.querySelector('pre code').innerText;
+      var done=function(){var old=btn.textContent;btn.textContent='Copied';setTimeout(function(){btn.textContent=old;},1400);};
+      if(navigator.clipboard && navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(done).catch(function(){window.prompt('Copy this code:',code);});}
+      else{window.prompt('Copy this code:',code);}
+    });
+  });
+  var links=Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id);});}});
+    },{rootMargin:'-12% 0px -75% 0px'});
+    document.querySelectorAll('section.chapter').forEach(function(s){io.observe(s);});
+  }
+})();
+</script>
+</body>
+</html>
