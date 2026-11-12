@@ -112,11 +112,30 @@ VIVA INSTANT ANSWER MATRIX
 Question                              │ Command to Run
 ──────────────────────────────────────┼─────────────────────────────────────────
 "Show me Deliverable 2 Showcase"      │ python3 demo.py -> Press 5
-"Show me your tests (65 tests)"       │ python3 demo.py -> Press 1 (or pytest tests/ -v)
+"Show me your tests (67 tests)"       │ python3 demo.py -> Press 1 (or pytest tests/ -v)
 "Show me dynamic SDN response"        │ python3 demo.py -> Press 5 (Scenario 2 & 3)
 "Show me node crash & recovery"       │ python3 demo.py -> Press 3
 "Show me the web dashboard"           │ python3 demo.py -> Press 4 -> Open http://localhost:8080
 "Show me live OpenFlow switch flows"  │ sudo ovs-ofctl -O OpenFlow13 dump-flows s1
 "Show me QoS queue statistics"        │ sudo ovs-ofctl -O OpenFlow13 queue-stats s1
 "Show me performance graphs"          │ ls -lh results/*.png
+================================================================================
+
+================================================================================
+SCRIPT: STRIP / RESTORE COMMENTS UTILITY
+================================================================================
+A utility script `scripts/remove_comments.py` is included to automatically strip
+explanatory comments from all project files before final submission:
+
+  Preview changes without modifying files:
+    python3 scripts/remove_comments.py --dry-run
+
+  Remove all comments with automatic .bak backup:
+    python3 scripts/remove_comments.py --backup
+
+  Remove all comments directly:
+    python3 scripts/remove_comments.py
+
+  Restore previous .bak backups:
+    python3 scripts/remove_comments.py --restore
 ================================================================================
