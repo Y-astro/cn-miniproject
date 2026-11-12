@@ -173,6 +173,8 @@ class HealthAgent:
         try:
             # Query stats collector for current system metrics
             metrics = self.collector.collect()
+            # Update transmission timestamp after metrics collection so latency measures true network delay
+            sent_ts = time.time()
             # If collector reported internal failure, fall back to lightweight HEARTBEAT
             if "collector_error" in metrics:
                 # Construct lightweight HEARTBEAT payload without detailed metrics

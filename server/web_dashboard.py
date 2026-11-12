@@ -217,6 +217,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         }
         .card:hover { border-color: var(--accent-blue); transform: translateY(-2px); }
         .card.down { border-color: var(--accent-red); opacity: 0.75; }
+        .card.card-loss { border-color: rgba(248, 81, 73, 0.7); box-shadow: 0 0 10px rgba(248, 81, 73, 0.15); }
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -439,9 +440,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     const cpu = m.cpu_percent !== undefined ? m.cpu_percent : 0;
                     const mem = m.mem_percent !== undefined ? m.mem_percent : 0;
                     const procs = m.process_count !== undefined ? m.process_count : 0;
+                    const lossVal = n.loss_percent !== undefined ? n.loss_percent : 0;
+                    const lossColor = lossVal > 20 ? 'var(--accent-red)' : (lossVal > 0 ? 'var(--accent-yellow)' : '#3fb950');
+                    const delayColor = n.avg_delay_ms > 20 ? 'var(--accent-yellow)' : '#8b949e';
 
                     const card = document.createElement('div');
-                    card.className = `card ${n.status === 'DOWN' ? 'down' : ''}`;
+                    card.className = `card ${n.status === 'DOWN' ? 'down' : (lossVal > 20 ? 'card-loss' : '')}`;
                     card.innerHTML = `
                         <div class="card-header">
                             <h3>${nodeId}</h3>
@@ -467,8 +471,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                         </div>
                         <div class="stats-footer">
                             <span>Procs: <strong>${procs}</strong></span>
-                            <span>Loss: <strong>${n.loss_percent}%</strong></span>
-                            <span>Avg Delay: <strong>${n.avg_delay_ms} ms</strong></span>
+                            <span>Loss: <strong style="color: ${lossColor}; font-weight: 700;">${lossVal}%</strong></span>
+                            <span>Avg Delay: <strong style="color: ${delayColor};">${n.avg_delay_ms} ms</strong></span>
                             <span>Seq: <strong>${n.last_seq !== null ? n.last_seq : '-'}</strong></span>
                         </div>
                     `;
@@ -590,6 +594,12 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
             if self.server_instance:
                 self.server_instance.priority_enabled = not getattr(self.server_instance, "priority_enabled", True)
                 new_state = self.server_instance.priority_enabled
+                # Reset node loss and latency stats so effect of new QoS mode is immediately reflected
+                if hasattr(self.server_instance, "registry") and hasattr(self.server_instance.registry, "reset_loss_stats"):
+                    self.server_instance.registry.reset_loss_stats()
+                # Reset dropped packet counter when restoring priority protection
+                if new_state:
+                    self.server_instance.bad_packet_count = 0
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")

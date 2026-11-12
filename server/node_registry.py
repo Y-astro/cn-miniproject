@@ -89,6 +89,26 @@ class NodeRegistry:
         # Return node state from dictionary
         return self.nodes.get(node_id)
 
+    # Method to reset loss and delay statistics across all registered nodes (e.g. on QoS mode switch)
+    def reset_loss_stats(self) -> None:
+        """Resets sequence tracking, loss, and latency metrics across all nodes."""
+        # Iterate over all registered NodeState instances
+        for node in self.nodes.values():
+            # Reset received packet count
+            node.total_received = 0
+            # Reset lost packet count
+            node.lost_packets = 0
+            # Reset duplicate packet counter
+            node.duplicates = 0
+            # Reset out-of-order packet counter
+            node.out_of_order = 0
+            # Clear historical delay samples
+            node.delays.clear()
+            # Clear last sequence baseline so next packet establishes fresh baseline
+            node.last_seq = None
+            # Clear seen sequences set
+            node.seen_seqs.clear()
+
     # Main packet ingestion method: updates sequence stats, computes latency, and tracks lifecycle
     def process_packet(
         self,

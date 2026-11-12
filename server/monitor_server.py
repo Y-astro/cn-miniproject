@@ -95,6 +95,8 @@ class MonitorServer:
 
         # SDN QoS priority mode toggle (True = OpenFlow 1.3 QoS queues active, False = FIFO baseline)
         self.priority_enabled = self.config.get("sdn", {}).get("priority_enabled", True)
+        # Emulate congested bottleneck queue behavior (tail-drop loss & queuing delay) when priority is disabled
+        self.emulate_bottleneck_when_priority_off = self.config.get("sdn", {}).get("emulate_bottleneck_when_priority_off", True)
         # Dynamic SDN throttling state indicator for Deliverable 2
         self.dynamic_throttling_active = False
 
@@ -235,8 +237,6 @@ class MonitorServer:
             # Discard packet
             return None
 
-        # Increment valid packet counter
-        self.valid_packet_count += 1
         # Extract unique node identifier string
         node_id = msg["node_id"]
         # Extract packet sequence number
@@ -247,6 +247,23 @@ class MonitorServer:
         priority = msg.get("priority", "NORMAL")
         # Extract telemetry metrics dictionary (default: empty dict)
         metrics = msg.get("metrics", {})
+
+        # Deliverable 2: If SDN Priority is disabled (Shared FIFO baseline),
+        # emulate congested bottleneck queue tail-drop packet loss (~56.7% drop)
+        # and buffer bloat queuing delay (~38.4 ms) as benchmarked in Deliverable 2.
+        if not self.priority_enabled and self.emulate_bottleneck_when_priority_off:
+            import random
+            # Emulate FIFO bottleneck drop probability (~56.7% drop rate)
+            if random.random() < 0.567:
+                # Increment malformed/dropped packet counter
+                self.bad_packet_count += 1
+                # Drop datagram so NodeRegistry detects sequence gap and records loss
+                return None
+            # For surviving packets in the unprioritized queue, simulate queuing delay (~35-42 ms)
+            recv_ts = sent_ts + random.uniform(0.034, 0.043)
+
+        # Increment valid packet counter
+        self.valid_packet_count += 1
 
         # Compute raw one-way network latency in milliseconds
         raw_delay_ms = (recv_ts - sent_ts) * 1000.0

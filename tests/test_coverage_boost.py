@@ -1,5 +1,6 @@
 """Additional unit tests to maximize test coverage across core modules."""
 
+import time
 import pytest
 from common.protocol import validate, encode, ProtocolError
 from common.config_loader import validate_config, ConfigError
@@ -148,3 +149,73 @@ def test_web_dashboard_endpoints(tmp_path):
     finally:
         httpd.shutdown()
         httpd.server_close()
+
+
+def test_priority_toggle_loss_emulation_and_reset(tmp_path):
+    """Verify that toggling priority_enabled off emulates congested FIFO loss and reset_loss_stats clears state."""
+    from common.protocol import encode
+
+    server = MonitorServer(
+        host="127.0.0.1",
+        port=0,
+        config_path="config.yaml",
+        csv_file=str(tmp_path / "rep.csv"),
+    )
+    # 1. Under priority ON, 10 packets are processed with 0 drops
+    server.priority_enabled = True
+    for seq in range(1, 11):
+        payload = {
+            "version": 1,
+            "type": "HEALTH",
+            "node_id": "h_test",
+            "seq": seq,
+            "sent_ts": time.time(),
+            "interval": 1.0,
+            "priority": "NORMAL",
+            "metrics": {"cpu_percent": 10.0, "mem_percent": 20.0, "process_count": 50},
+        }
+        res = server.process_datagram(encode(payload), ("127.0.0.1", 5005), time.time())
+        assert res is not None
+
+    node = server.registry.get_node("h_test")
+    assert node is not None
+    assert node.total_received == 10
+    assert node.lost_packets == 0
+    assert node.loss_percent == 0.0
+
+    # 2. Toggle priority OFF -> emulates bottleneck drop
+    server.priority_enabled = False
+    server.registry.reset_loss_stats()
+    assert node.total_received == 0
+    assert node.lost_packets == 0
+
+    dropped = 0
+    received = 0
+    for seq in range(1, 101):
+        payload = {
+            "version": 1,
+            "type": "HEALTH",
+            "node_id": "h_test",
+            "seq": seq,
+            "sent_ts": time.time(),
+            "interval": 1.0,
+            "priority": "NORMAL",
+            "metrics": {"cpu_percent": 10.0, "mem_percent": 20.0, "process_count": 50},
+        }
+        res = server.process_datagram(encode(payload), ("127.0.0.1", 5005), time.time())
+        if res is None:
+            dropped += 1
+        else:
+            received += 1
+
+    # Over 100 packets with ~56.7% drop probability, dropped packets should be > 20 and received > 20
+    assert dropped > 20
+    assert received > 20
+    assert node.lost_packets > 10
+    assert node.loss_percent > 20.0
+
+    # 3. Toggle back ON and reset stats
+    server.priority_enabled = True
+    server.registry.reset_loss_stats()
+    assert node.loss_percent == 0.0
+    assert node.lost_packets == 0
