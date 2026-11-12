@@ -93,6 +93,11 @@ class MonitorServer:
         # Initialize AlertEngine for checking CPU, memory, process, and loss thresholds
         self.alert_engine = AlertEngine(self.config) if self.config else None
 
+        # SDN QoS priority mode toggle (True = OpenFlow 1.3 QoS queues active, False = FIFO baseline)
+        self.priority_enabled = self.config.get("sdn", {}).get("priority_enabled", True)
+        # Dynamic SDN throttling state indicator for Deliverable 2
+        self.dynamic_throttling_active = False
+
         # UDP socket reference initialized to None
         self.sock: Optional[socket.socket] = None
         # Server execution loop control flag

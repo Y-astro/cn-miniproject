@@ -95,3 +95,56 @@ def test_parse_args_coverage(monkeypatch):
     args_agent = parse_agent_args()
     assert args_agent.node_id == "h_test"
     assert args_agent.interval == 2.0
+
+
+def test_web_dashboard_endpoints(tmp_path):
+    """Test web dashboard HTML and D2 priority toggle REST endpoints."""
+    import urllib.request
+    import json
+    import socket
+    import time
+    from server.web_dashboard import run_web_dashboard
+
+    server = MonitorServer(
+        host="127.0.0.1",
+        port=0,
+        config_path="config.yaml",
+        csv_file=str(tmp_path / "web_rep.csv"),
+    )
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+
+    httpd = run_web_dashboard(server, http_port=port)
+    assert httpd is not None
+    time.sleep(0.2)
+
+    try:
+        # 1. Fetch HTML index
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/") as res:
+            html = res.read().decode("utf-8")
+            assert "SDN Priority: ON (D2)" in html
+            assert "Deliverable 2: OpenFlow 1.3 QoS" in html
+
+        # 2. Fetch /api/status
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/status") as res:
+            data = json.loads(res.read().decode("utf-8"))
+            assert data["priority_enabled"] is True
+            assert data["dynamic_throttling_active"] is False
+
+        # 3. Toggle priority via /api/toggle_priority
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/toggle_priority", method="POST")
+        with urllib.request.urlopen(req) as res:
+            data = json.loads(res.read().decode("utf-8"))
+            assert data["priority_enabled"] is False
+            assert server.priority_enabled is False
+
+        # 4. Toggle throttle via /api/toggle_throttle
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/toggle_throttle", method="POST")
+        with urllib.request.urlopen(req) as res:
+            data = json.loads(res.read().decode("utf-8"))
+            assert data["dynamic_throttling_active"] is True
+            assert server.dynamic_throttling_active is True
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
