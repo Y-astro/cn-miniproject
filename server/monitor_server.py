@@ -8,6 +8,8 @@ import csv
 import os
 # Import select module for I/O multiplexing across non-blocking sockets
 import select
+# Import deque for bounded event ring buffers
+from collections import deque
 # Import signal module for handling graceful termination signals (SIGINT, SIGTERM)
 import signal
 # Import socket module for low-level UDP network server operations
@@ -108,6 +110,8 @@ class MonitorServer:
         self.bad_packet_count = 0
         # Cumulative counter tracking valid protocol packets successfully processed
         self.valid_packet_count = 0
+        # Rolling ring buffer of recent packet flow events for live topology visualization
+        self.recent_packet_events: deque = deque(maxlen=40)
 
         # Threading reentrant lock to serialize concurrent CSV file writes
         self._csv_lock = threading.Lock()
@@ -247,6 +251,8 @@ class MonitorServer:
         priority = msg.get("priority", "NORMAL")
         # Extract telemetry metrics dictionary (default: empty dict)
         metrics = msg.get("metrics", {})
+        # Extract reporting interval from message if provided
+        interval = msg.get("interval")
 
         # Deliverable 2: If SDN Priority is disabled (Shared FIFO baseline),
         # emulate congested bottleneck queue tail-drop packet loss (~56.7% drop)
@@ -257,7 +263,26 @@ class MonitorServer:
             if random.random() < 0.567:
                 # Increment malformed/dropped packet counter
                 self.bad_packet_count += 1
-                # Drop datagram so NodeRegistry detects sequence gap and records loss
+                # Directly update node in registry so loss is visible immediately without lag
+                node = self.registry.get_node(node_id)
+                if node is None:
+                    from server.node_registry import NodeState
+                    node = NodeState(node_id, initial_interval=interval or self.registry.default_interval, initial_ts=recv_ts)
+                    self.registry.nodes[node_id] = node
+                node.lost_packets += 1
+                node.last_seq = seq
+                node.seen_seqs.add(seq)
+                node.last_seen_ts = recv_ts
+                self.recent_packet_events.append({
+                    "node_id": node_id,
+                    "seq": seq,
+                    "priority": priority,
+                    "status": "DROPPED",
+                    "delay_ms": round(random.uniform(34.0, 43.0), 2),
+                    "loss_percent": node.loss_percent,
+                    "ts": recv_ts,
+                })
+                # Drop datagram so server rejects unprioritized overflow packet
                 return None
             # For surviving packets in the unprioritized queue, simulate queuing delay (~35-42 ms)
             recv_ts = sent_ts + random.uniform(0.034, 0.043)
@@ -289,6 +314,19 @@ class MonitorServer:
             metrics=metrics,
             interval=interval,
         )
+
+        # Record successful packet delivery event for live animated topology canvas
+        node = self.registry.get_node(node_id)
+        loss_pct = node.loss_percent if node else 0.0
+        self.recent_packet_events.append({
+            "node_id": node_id,
+            "seq": seq,
+            "priority": priority,
+            "status": "DELIVERED",
+            "delay_ms": round(delay_ms, 2),
+            "loss_percent": loss_pct,
+            "ts": recv_ts,
+        })
 
         # If alert engine is configured and metrics are present, evaluate threshold rules
         if self.alert_engine and metrics:
