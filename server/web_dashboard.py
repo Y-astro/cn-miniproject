@@ -731,6 +731,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         // --- Global Pipeline State & Topology Engine ---
         let currentPriorityOn = true;
         let isSimPaused = false;
+        let isTogglingPause = false;
+        let isInitialLoad = true;
         let currentVivaStep = 'arch';
         let activePackets = [];
         let openflowPulses = [];
@@ -897,8 +899,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         }
 
         // --- Interactive Simulation Presentation Controls ---
-        async function toggleSimPause() {
-            isSimPaused = !isSimPaused;
+        function setSimPauseState(paused) {
+            isSimPaused = Boolean(paused);
             const btn = document.getElementById('sim-play-pause-btn');
             const icon = document.getElementById('sim-play-icon');
             const text = document.getElementById('sim-play-text');
@@ -907,19 +909,35 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     btn.className = 'ctrl-btn resume';
                     if (icon) icon.innerText = '▶';
                     if (text) text.innerText = 'Resume Simulation';
-                    // Capture snapshot of last known states so cards and nodes stay strictly frozen
                     lastKnownHostStates = JSON.parse(JSON.stringify(liveHostMetrics));
                 } else {
                     btn.className = 'ctrl-btn pause';
                     if (icon) icon.innerText = '⏸';
                     if (text) text.innerText = 'Pause Simulation';
-                    updateDashboard(true);
                 }
             }
+        }
+
+        async function toggleSimPause() {
+            if (isTogglingPause) return;
+            isTogglingPause = true;
+            const targetPaused = !isSimPaused;
+            setSimPauseState(targetPaused);
             try {
-                await fetch('/api/toggle_pause', { method: 'POST' });
+                const res = await fetch(`/api/toggle_pause?paused=${targetPaused ? '1' : '0'}`, { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.simulation_paused !== undefined) {
+                        setSimPauseState(data.simulation_paused);
+                    }
+                }
             } catch (err) {
                 console.warn("Could not notify server of pause state:", err);
+            } finally {
+                isTogglingPause = false;
+                if (!targetPaused) {
+                    updateDashboard(true);
+                }
             }
         }
 
@@ -1828,7 +1846,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 spawnOFPulse('FLOW_MOD', 'DOWN', currentPriorityOn ? 'OFPFlowMod: Delete QoS Rules' : 'OFPFlowMod: Install Queue 2/1/0', currentPriorityOn ? '#f85149' : '#3fb950');
                 const res = await fetch('/api/toggle_priority', { method: 'POST' });
                 if (res.ok) {
-                    await updateDashboard();
+                    await updateDashboard(true);
                 }
             } catch (err) {
                 console.error("Failed to toggle priority:", err);
@@ -1840,7 +1858,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 spawnOFPulse('FLOW_MOD', 'DOWN', 'OFPFlowMod: Prio 80 Throttle Bulk', '#d29922');
                 const res = await fetch('/api/toggle_throttle', { method: 'POST' });
                 if (res.ok) {
-                    await updateDashboard();
+                    await updateDashboard(true);
                 }
             } catch (err) {
                 console.error("Failed to toggle dynamic throttle:", err);
@@ -1856,15 +1874,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 if (!res.ok) return;
                 const data = await res.json();
 
-                if (data.simulation_paused !== undefined && data.simulation_paused && !isSimPaused) {
-                    isSimPaused = true;
-                    const btn = document.getElementById('sim-play-pause-btn');
-                    const icon = document.getElementById('sim-play-icon');
-                    const text = document.getElementById('sim-play-text');
-                    if (btn) {
-                        btn.className = 'ctrl-btn resume';
-                        if (icon) icon.innerText = '▶';
-                        if (text) text.innerText = 'Resume Simulation';
+                // On first page load only, synchronize with server if already paused
+                if (isInitialLoad) {
+                    isInitialLoad = false;
+                    if (data.simulation_paused) {
+                        setSimPauseState(true);
                     }
                 }
 
@@ -2208,10 +2222,17 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"dynamic_throttling_active": new_throttle}).encode("utf-8"))
         # Endpoint to toggle Simulation Pause (freezes packets and holds nodes at last known state)
-        elif self.path in ("/api/toggle_pause", "/api/toggle_pause/"):
+        elif self.path.split("?")[0] in ("/api/toggle_pause", "/api/toggle_pause/"):
             new_pause = False
             if self.server_instance:
-                self.server_instance.simulation_paused = not getattr(self.server_instance, "simulation_paused", False)
+                from urllib.parse import urlparse, parse_qs
+                parsed = urlparse(self.path)
+                qs = parse_qs(parsed.query)
+                if "paused" in qs:
+                    target_val = qs["paused"][0].lower() in ("1", "true", "yes")
+                    self.server_instance.simulation_paused = target_val
+                else:
+                    self.server_instance.simulation_paused = not getattr(self.server_instance, "simulation_paused", False)
                 new_pause = self.server_instance.simulation_paused
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -2219,7 +2240,7 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"simulation_paused": new_pause}).encode("utf-8"))
         # Endpoint to inject simultaneous high load anomaly spikes across all 3 nodes (h1, h2, h3)
-        elif self.path in ("/api/inject_spike", "/api/inject_spike/"):
+        elif self.path.split("?")[0] in ("/api/inject_spike", "/api/inject_spike/"):
             spiked = {}
             if self.server_instance and hasattr(self.server_instance, "inject_spike"):
                 spiked = self.server_instance.inject_spike(["h1", "h2", "h3"])
@@ -2238,7 +2259,8 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
     # Handle incoming HTTP POST requests (delegates toggle actions to matching logic)
     def do_POST(self):
         # Support POST method on toggle endpoints
-        if self.path in ("/api/toggle_priority", "/api/toggle_throttle", "/api/toggle_pause", "/api/inject_spike"):
+        clean_path = self.path.split("?")[0]
+        if clean_path in ("/api/toggle_priority", "/api/toggle_throttle", "/api/toggle_pause", "/api/inject_spike"):
             self.do_GET()
         else:
             self.send_response(404)

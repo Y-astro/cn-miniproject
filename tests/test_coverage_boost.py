@@ -154,6 +154,20 @@ def test_web_dashboard_endpoints(tmp_path):
             assert data["simulation_paused"] is True
             assert server.simulation_paused is True
 
+        # Test explicit resume via ?paused=0
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/toggle_pause?paused=0", method="POST")
+        with urllib.request.urlopen(req) as res:
+            data = json.loads(res.read().decode("utf-8"))
+            assert data["simulation_paused"] is False
+            assert server.simulation_paused is False
+
+        # Test explicit pause via ?paused=1
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/toggle_pause?paused=1", method="POST")
+        with urllib.request.urlopen(req) as res:
+            data = json.loads(res.read().decode("utf-8"))
+            assert data["simulation_paused"] is True
+            assert server.simulation_paused is True
+
         # When paused, process_datagram drops incoming datagrams to freeze state
         from common.protocol import encode
         raw_pkt = encode({
