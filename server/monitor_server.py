@@ -23,7 +23,7 @@ import time
 # Import Path for robust filesystem manipulation
 from pathlib import Path
 # Import typing annotations for static type verification
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Prepend parent project root directory to Python module search path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -101,6 +101,8 @@ class MonitorServer:
         self.emulate_bottleneck_when_priority_off = self.config.get("sdn", {}).get("emulate_bottleneck_when_priority_off", True)
         # Dynamic SDN throttling state indicator for Deliverable 2
         self.dynamic_throttling_active = False
+        # Simulation pause control flag: freezes packet processing and holds nodes at last known state
+        self.simulation_paused = False
 
         # UDP socket reference initialized to None
         self.sock: Optional[socket.socket] = None
@@ -253,6 +255,10 @@ class MonitorServer:
         metrics = msg.get("metrics", {})
         # Extract reporting interval from message if provided
         interval = msg.get("interval")
+
+        # If simulation is paused, ignore incoming datagrams to freeze state at last known values
+        if getattr(self, "simulation_paused", False):
+            return None
 
         # Deliverable 2: If SDN Priority is disabled (Shared FIFO baseline),
         # emulate congested bottleneck queue tail-drop packet loss (~56.7% drop)
@@ -476,10 +482,11 @@ class MonitorServer:
                 # Sample current monotonic time for periodic scheduled tasks
                 now_mono = time.monotonic()
 
-                # Run node liveness check every 0.5s to detect timed-out nodes
+                # Run node liveness check every 0.5s to detect timed-out nodes (when not paused)
                 if now_mono - last_liveness_check >= 0.5:
-                    # Check liveness across all registered nodes
-                    self.registry.check_liveness(current_ts=recv_ts)
+                    if not getattr(self, "simulation_paused", False):
+                        # Check liveness across all registered nodes
+                        self.registry.check_liveness(current_ts=recv_ts)
                     # Update last liveness check timestamp
                     last_liveness_check = now_mono
 
@@ -571,6 +578,61 @@ class MonitorServer:
 
         # Log clean termination
         self.logger.info("MonitorServer stopped cleanly.")
+
+    # Method to inject controlled high-load anomaly spikes across nodes for viva presentation
+    def inject_spike(self, node_ids: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Injects high-load critical anomaly spikes across nodes (default: h1, h2, h3)."""
+        import time
+        from server.node_registry import NodeState
+        targets = node_ids or ["h1", "h2", "h3"]
+        spiked_info = {}
+        now = time.time()
+        for idx, nid in enumerate(targets):
+            cpu_val = round(95.2 + (idx * 1.5) + (now % 1.2), 1)
+            mem_val = round(91.0 + (idx * 1.8), 1)
+            procs = 520 + (idx * 35)
+            metrics = {
+                "cpu_percent": min(99.0, cpu_val),
+                "mem_percent": min(98.0, mem_val),
+                "disk_percent": 45.0,
+                "net_bytes_sent": 1500000 + (idx * 100000),
+                "net_bytes_recv": 8500000 + (idx * 200000),
+                "process_count": procs,
+            }
+            node = self.registry.get_node(nid)
+            if node is None:
+                node = NodeState(nid, initial_interval=1.0, initial_ts=now)
+                self.registry.nodes[nid] = node
+            node.last_metrics = metrics
+            node.last_seen_ts = now
+            node.status = "UP"
+            seq = (node.last_seq or 100) + 1
+            node.last_seq = seq
+            node.total_received += 1
+            self.valid_packet_count += 1
+
+            if self.alert_engine:
+                alerts = self.alert_engine.evaluate_report(
+                    node_id=nid,
+                    metrics=metrics,
+                    trigger_ts=now,
+                    packet_loss_percent=node.loss_percent,
+                    now=now,
+                )
+                for alert in alerts:
+                    self._on_registry_event("ALERT", nid, alert.to_dict())
+
+            self.recent_packet_events.append({
+                "node_id": nid,
+                "seq": seq,
+                "priority": "CRITICAL",
+                "status": "DELIVERED",
+                "delay_ms": 1.8,
+                "loss_percent": node.loss_percent,
+                "ts": now,
+            })
+            spiked_info[nid] = metrics
+        return spiked_info
 
 
 # Function to configure CLI command-line flags for the server

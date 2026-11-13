@@ -146,6 +146,42 @@ def test_web_dashboard_endpoints(tmp_path):
             data = json.loads(res.read().decode("utf-8"))
             assert data["dynamic_throttling_active"] is True
             assert server.dynamic_throttling_active is True
+
+        # 5. Toggle pause via /api/toggle_pause
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/toggle_pause", method="POST")
+        with urllib.request.urlopen(req) as res:
+            data = json.loads(res.read().decode("utf-8"))
+            assert data["simulation_paused"] is True
+            assert server.simulation_paused is True
+
+        # When paused, process_datagram drops incoming datagrams to freeze state
+        from common.protocol import encode
+        raw_pkt = encode({
+            "version": 1,
+            "type": "HEALTH",
+            "node_id": "h1",
+            "seq": 101,
+            "sent_ts": time.time(),
+            "priority": "NORMAL",
+            "metrics": {"cpu_percent": 25.0, "mem_percent": 30.0, "process_count": 100},
+        })
+        res_drop = server.process_datagram(raw_pkt, ("10.0.0.1", 5005), time.time())
+        assert res_drop is None
+
+        # 6. Inject spike across nodes via /api/inject_spike
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/api/inject_spike", method="POST")
+        with urllib.request.urlopen(req) as res:
+            data = json.loads(res.read().decode("utf-8"))
+            assert data["status"] == "spiked"
+            assert "h1" in data["nodes"]
+            assert "h2" in data["nodes"]
+            assert "h3" in data["nodes"]
+            assert data["nodes"]["h1"]["cpu_percent"] >= 90.0
+            assert data["nodes"]["h2"]["cpu_percent"] >= 90.0
+            assert data["nodes"]["h3"]["cpu_percent"] >= 90.0
+            assert server.registry.get_node("h1").last_metrics["cpu_percent"] >= 90.0
+            assert server.registry.get_node("h2").last_metrics["cpu_percent"] >= 90.0
+            assert server.registry.get_node("h3").last_metrics["cpu_percent"] >= 90.0
     finally:
         httpd.shutdown()
         httpd.server_close()

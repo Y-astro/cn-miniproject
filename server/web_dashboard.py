@@ -218,6 +218,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         .card:hover { border-color: var(--accent-blue); transform: translateY(-2px); }
         .card.down { border-color: var(--accent-red); opacity: 0.75; }
         .card.card-loss { border-color: rgba(248, 81, 73, 0.7); box-shadow: 0 0 10px rgba(248, 81, 73, 0.15); }
+        .card.card-spike { border-color: rgba(240, 136, 62, 0.8); box-shadow: 0 0 12px rgba(240, 136, 62, 0.25); }
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -657,8 +658,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     <button id="sim-step-btn" class="ctrl-btn" onclick="stepSimulation()" title="Advance simulation by 1 discrete frame/packet while paused">
                         <span>⏭</span> <span>Step Frame</span>
                     </button>
-                    <button class="ctrl-btn spike" onclick="injectSpike()" title="Trigger Anomaly on h2 to demonstrate Priority 100 DSCP 46 EF QoS Rule Injection">
-                        <span>🚨</span> <span>Inject Spike (h2)</span>
+                    <button class="ctrl-btn spike" onclick="injectSpike()" title="Trigger High Load Anomaly Spikes on h1, h2, and h3 simultaneously to demonstrate multi-node QoS Queue 2 handling">
+                        <span>🚨</span> <span>Inject Spike (All 3)</span>
                     </button>
                     <button id="sim-bulk-btn" class="ctrl-btn" onclick="toggleBulkTraffic()" title="Burst background cross-traffic to demonstrate bottleneck buffer saturation">
                         <span>🌪️</span> <span>Burst Bulk Traffic</span>
@@ -741,7 +742,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         let lastSimulatedSpawn = 0;
         let lastOFPulseTime = 0;
         let localSeqCounter = 100;
-        let liveHostMetrics = {};
+        let liveHostMetrics = {
+            h1_prod:  { cpu_percent: 24.5, mem_percent: 42.0, process_count: 142 },
+            h2_db:    { cpu_percent: 28.1, mem_percent: 46.5, process_count: 185 },
+            h3_cache: { cpu_percent: 19.8, mem_percent: 34.0, process_count: 98 },
+            h1:       { cpu_percent: 24.5, mem_percent: 42.0, process_count: 142 },
+            h2:       { cpu_percent: 28.1, mem_percent: 46.5, process_count: 185 },
+            h3:       { cpu_percent: 19.8, mem_percent: 34.0, process_count: 98 }
+        };
+        let lastKnownHostStates = JSON.parse(JSON.stringify(liveHostMetrics));
+
+        function getHostMetrics(k) {
+            if (!k) return {};
+            const clean = String(k).replace('_prod', '').replace('_db', '').replace('_cache', '');
+            return liveHostMetrics[k] || liveHostMetrics[clean] || {};
+        }
+
+        function getHostObj(k) {
+            const layout = getTopologyLayout();
+            if (!layout || !layout.hosts) return null;
+            if (layout.hosts[k]) return layout.hosts[k];
+            if (k === 'h1' || k === 'h1_prod') return layout.hosts.h1_prod;
+            if (k === 'h2' || k === 'h2_db') return layout.hosts.h2_db;
+            if (k === 'h3' || k === 'h3_cache') return layout.hosts.h3_cache;
+            return layout.hosts.h1_prod;
+        }
         let switchRuleFlash = 0.0;
         let ryuStatsFlash = 0.0;
         let bulkTrafficBurstActive = false;
@@ -797,9 +822,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     toY: 175
                 },
                 hosts: {
-                    h1_prod:  { x: hostX, y: 220, name: 'h1_prod', title: 'h1 (Prod)', mode: 'Real PSUtil', ip: '10.0.0.1', color: '#58a6ff' },
+                    h1_prod:  { x: hostX, y: 220, name: 'h1_prod', title: 'h1 (Prod Server)', mode: 'Telemetry & Spikes', ip: '10.0.0.1', color: '#58a6ff' },
                     h2_db:    { x: hostX, y: 330, name: 'h2_db',   title: 'h2 (Database)', mode: 'Spike Pattern', ip: '10.0.0.2', color: '#f0883e' },
-                    h3_cache: { x: hostX, y: 440, name: 'h3_cache',title: 'h3 (Cache)', mode: 'Normal BE', ip: '10.0.0.3', color: '#3fb950' }
+                    h3_cache: { x: hostX, y: 440, name: 'h3_cache',title: 'h3 (Cache Cluster)', mode: 'Telemetry & Spikes', ip: '10.0.0.3', color: '#3fb950' }
                 },
                 sw:  { x: swX, y: 330, w: 260, h: 310 },
                 srv: { x: serverX, y: 330, w: 145, h: 140 }
@@ -872,7 +897,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         }
 
         // --- Interactive Simulation Presentation Controls ---
-        function toggleSimPause() {
+        async function toggleSimPause() {
             isSimPaused = !isSimPaused;
             const btn = document.getElementById('sim-play-pause-btn');
             const icon = document.getElementById('sim-play-icon');
@@ -882,11 +907,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     btn.className = 'ctrl-btn resume';
                     if (icon) icon.innerText = '▶';
                     if (text) text.innerText = 'Resume Simulation';
+                    // Capture snapshot of last known states so cards and nodes stay strictly frozen
+                    lastKnownHostStates = JSON.parse(JSON.stringify(liveHostMetrics));
                 } else {
                     btn.className = 'ctrl-btn pause';
                     if (icon) icon.innerText = '⏸';
                     if (text) text.innerText = 'Pause Simulation';
+                    updateDashboard(true);
                 }
+            }
+            try {
+                await fetch('/api/toggle_pause', { method: 'POST' });
+            } catch (err) {
+                console.warn("Could not notify server of pause state:", err);
             }
         }
 
@@ -894,18 +927,48 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             if (activePackets.length > 0) {
                 activePackets.forEach(p => { p.progress += 0.05; });
             } else {
+                const hostKeys = ['h1_prod', 'h2_db', 'h3_cache'];
+                const randHost = hostKeys[Math.floor(Math.random() * hostKeys.length)];
                 const seq = ++localSeqCounter;
-                spawnPacket('h2_db', seq, 'CRITICAL', 'DELIVERED', 1.8);
-                addSequenceChip('h2_db', seq, 'CRITICAL', 'DELIVERED', 1.8);
+                const isCrit = (getHostMetrics(randHost).cpu_percent >= 90);
+                const isDrop = !currentPriorityOn;
+                spawnPacket(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', isDrop ? 'DROPPED' : 'DELIVERED', isCrit ? 1.8 : 2.5);
+                addSequenceChip(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', isDrop ? 'DROPPED' : 'DELIVERED', isCrit ? 1.8 : 2.5);
             }
             openflowPulses.forEach(p => { p.y += (p.dir === 'DOWN' ? 6 : -6); });
         }
 
-        function injectSpike() {
-            const seq = ++localSeqCounter;
-            spawnPacket('h2_db', seq, 'CRITICAL', 'DELIVERED', 1.8);
-            addSequenceChip('h2_db', seq, 'CRITICAL', 'DELIVERED', 1.8);
-            spawnOFPulse('FLOW_MOD', 'DOWN', 'OFPFlowMod: Priority 100 DSCP 46 -> Q2', '#f0883e');
+        async function injectSpike() {
+            // Spikes high load across ALL THREE NODES (h1, h2, h3) simultaneously
+            const spikeMetrics = {
+                h1_prod:  { cpu_percent: 96.8, mem_percent: 91.5, process_count: 530 },
+                h2_db:    { cpu_percent: 98.4, mem_percent: 95.0, process_count: 595 },
+                h3_cache: { cpu_percent: 95.2, mem_percent: 89.8, process_count: 515 },
+                h1:       { cpu_percent: 96.8, mem_percent: 91.5, process_count: 530 },
+                h2:       { cpu_percent: 98.4, mem_percent: 95.0, process_count: 595 },
+                h3:       { cpu_percent: 95.2, mem_percent: 89.8, process_count: 515 }
+            };
+            Object.assign(liveHostMetrics, spikeMetrics);
+            lastKnownHostStates = JSON.parse(JSON.stringify(liveHostMetrics));
+
+            // All 3 nodes spawn critical alert packets simultaneously
+            ['h1_prod', 'h2_db', 'h3_cache'].forEach((nodeId) => {
+                const seq = ++localSeqCounter;
+                const isDrop = !currentPriorityOn;
+                spawnPacket(nodeId, seq, 'CRITICAL', isDrop ? 'DROPPED' : 'DELIVERED', isDrop ? 38.4 : 1.8);
+                addSequenceChip(nodeId, seq, 'CRITICAL', isDrop ? 'DROPPED' : 'DELIVERED', isDrop ? 38.4 : 1.8);
+            });
+
+            // Ryu SDN Controller sends OpenFlow FlowMod rule prioritizing all 3 into Queue 2
+            spawnOFPulse('FLOW_MOD', 'DOWN', 'OFPFlowMod: Prioritize h1,h2,h3 (Q2 EF)', '#f0883e');
+
+            // Notify backend server so server registry, CSV logs, and alerts feed also update
+            try {
+                await fetch('/api/inject_spike', { method: 'POST' });
+                await updateDashboard(true);
+            } catch (err) {
+                console.warn("Could not notify backend of spike injection:", err);
+            }
         }
 
         function toggleBulkTraffic() {
@@ -1257,12 +1320,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
             Object.keys(hosts).forEach(k => {
                 const h = hosts[k];
-                const destY = (k === 'h2_db' && currentPriorityOn) ? queueYEF : (k === 'h3_cache' && currentPriorityOn ? queueYBulk : queueYNorm);
+                const metrics = getHostMetrics(k);
+                const cpu = metrics.cpu_percent !== undefined ? metrics.cpu_percent : 24;
+                const isHostSpiked = (cpu >= 90);
+                const destY = (isHostSpiked && currentPriorityOn) ? queueYEF : (k === 'h3_cache' && currentPriorityOn && !isHostSpiked ? queueYBulk : queueYNorm);
                 ctx.beginPath();
                 ctx.moveTo(h.x + 55, h.y);
                 ctx.bezierCurveTo((h.x + sw.x) / 2, h.y, (h.x + sw.x) / 2, destY, sw.x - sw.w / 2, destY);
-                ctx.strokeStyle = 'rgba(48, 54, 61, 0.75)';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = isHostSpiked ? 'rgba(240, 136, 62, 0.75)' : 'rgba(48, 54, 61, 0.75)';
+                ctx.lineWidth = isHostSpiked ? 2.5 : 2;
                 ctx.stroke();
 
                 // Directional flow indicator pulses along host links
@@ -1270,8 +1336,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 const fx = (h.x + 55) + (sw.x - sw.w / 2 - (h.x + 55)) * flowPhase;
                 const fy = h.y + (destY - h.y) * flowPhase;
                 ctx.beginPath();
-                ctx.arc(fx, fy, 2, 0, Math.PI * 2);
-                ctx.fillStyle = h.color;
+                ctx.arc(fx, fy, isHostSpiked ? 3 : 2, 0, Math.PI * 2);
+                ctx.fillStyle = isHostSpiked ? '#f0883e' : h.color;
                 ctx.fill();
             });
 
@@ -1312,16 +1378,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             // 8. Draw Host Nodes on Left
             Object.keys(hosts).forEach(k => {
                 const h = hosts[k];
-                const metrics = liveHostMetrics[k] || {};
-                const cpu = metrics.cpu_percent !== undefined ? metrics.cpu_percent : (k === 'h2_db' ? 94 : 24);
+                const metrics = getHostMetrics(k);
+                const cpu = metrics.cpu_percent !== undefined ? metrics.cpu_percent : (k === 'h2_db' ? 28 : 24);
+                const isHostSpiked = (cpu >= 90);
 
                 // Host box
                 ctx.fillStyle = '#161b22';
-                ctx.strokeStyle = (k === 'h2_db' && cpu >= 90) ? '#f0883e' : '#30363d';
-                ctx.lineWidth = (k === 'h2_db' && cpu >= 90) ? 2 : 1.5;
-                if (k === 'h2_db' && cpu >= 90) {
+                ctx.strokeStyle = isHostSpiked ? '#f0883e' : '#30363d';
+                ctx.lineWidth = isHostSpiked ? 2 : 1.5;
+                if (isHostSpiked) {
                     ctx.shadowColor = '#f0883e';
-                    ctx.shadowBlur = 8;
+                    ctx.shadowBlur = 10;
                 }
                 ctx.beginPath();
                 ctx.roundRect(h.x - 55, h.y - 32, 110, 64, 6);
@@ -1332,8 +1399,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 // Status LED
                 ctx.beginPath();
                 ctx.arc(h.x - 42, h.y - 18, 4, 0, Math.PI * 2);
-                ctx.fillStyle = h.color;
-                ctx.shadowColor = h.color;
+                ctx.fillStyle = isHostSpiked ? '#f0883e' : h.color;
+                ctx.shadowColor = isHostSpiked ? '#f0883e' : h.color;
                 ctx.shadowBlur = 6;
                 ctx.fill();
                 ctx.shadowBlur = 0;
@@ -1345,19 +1412,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.fillText(h.name, h.x - 32, h.y - 15);
 
                 // Host subtitle / mode
-                ctx.fillStyle = '#8b949e';
+                ctx.fillStyle = isHostSpiked ? '#f0883e' : '#8b949e';
                 ctx.font = '9px system-ui';
-                ctx.fillText(h.mode, h.x - 42, h.y - 1);
+                ctx.fillText(isHostSpiked ? '⚠️ High Load (EF)' : h.mode, h.x - 42, h.y - 1);
 
                 // CPU metric pill
-                ctx.fillStyle = cpu >= 90 ? 'rgba(240, 136, 62, 0.25)' : 'rgba(88, 166, 255, 0.15)';
-                ctx.strokeStyle = cpu >= 90 ? '#f0883e' : 'rgba(88, 166, 255, 0.4)';
+                ctx.fillStyle = isHostSpiked ? 'rgba(240, 136, 62, 0.25)' : 'rgba(88, 166, 255, 0.15)';
+                ctx.strokeStyle = isHostSpiked ? '#f0883e' : 'rgba(88, 166, 255, 0.4)';
                 ctx.beginPath();
                 ctx.roundRect(h.x - 42, h.y + 7, 84, 16, 3);
                 ctx.fill();
                 ctx.stroke();
 
-                ctx.fillStyle = cpu >= 90 ? '#f0883e' : '#58a6ff';
+                ctx.fillStyle = isHostSpiked ? '#f0883e' : '#58a6ff';
                 ctx.font = 'bold 9px monospace';
                 ctx.fillText(`CPU: ${cpu}% [${h.ip}]`, h.x - 38, h.y + 19);
             });
@@ -1573,8 +1640,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     p.progress += p.speed;
                 }
 
-                const hostObj = hosts[p.nodeId] || hosts.h1_prod;
-                const destY = (p.isCrit && currentPriorityOn) ? queueYEF : (p.nodeId === 'h3_cache' && currentPriorityOn ? queueYBulk : queueYNorm);
+                const hostObj = getHostObj(p.nodeId) || hosts.h1_prod;
+                const destY = (p.isCrit && currentPriorityOn) ? queueYEF : ((p.nodeId === 'h3_cache' || p.nodeId === 'h3') && currentPriorityOn ? queueYBulk : queueYNorm);
 
                 let px, py;
                 // Stage 1: Host to Switch Ingress (progress 0.0 -> 0.45)
@@ -1690,18 +1757,21 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
             // 14. Simulation Paused Presentation Overlay Watermark
             if (isSimPaused) {
-                ctx.fillStyle = 'rgba(13, 17, 23, 0.82)';
-                ctx.fillRect(cw / 2 - 200, ch - 42, 400, 30);
+                ctx.fillStyle = 'rgba(13, 17, 23, 0.88)';
+                ctx.fillRect(cw / 2 - 240, ch - 50, 480, 42);
                 ctx.strokeStyle = '#d29922';
                 ctx.lineWidth = 1.5;
-                ctx.strokeRect(cw / 2 - 200, ch - 42, 400, 30);
+                ctx.strokeRect(cw / 2 - 240, ch - 50, 480, 42);
                 ctx.fillStyle = '#d29922';
-                ctx.font = 'bold 11.5px system-ui';
+                ctx.font = 'bold 12px system-ui';
                 ctx.textAlign = 'center';
-                ctx.fillText('⏸ SIMULATION PAUSED — PRESENTATION FREEZE MODE', cw / 2, ch - 26);
+                ctx.fillText('⏸ SIMULATION PAUSED — FROZEN AT LAST KNOWN STATE', cw / 2, ch - 30);
                 ctx.fillStyle = '#8b949e';
-                ctx.font = '9.5px system-ui';
-                ctx.fillText('Inspect packet positions, flow table rules, and queue state', cw / 2, ch - 15);
+                ctx.font = '10px monospace';
+                const m1 = (getHostMetrics('h1_prod').cpu_percent || 24);
+                const m2 = (getHostMetrics('h2_db').cpu_percent || 28);
+                const m3 = (getHostMetrics('h3_cache').cpu_percent || 20);
+                ctx.fillText(`h1: ${m1}% CPU  |  h2: ${m2}% CPU  |  h3: ${m3}% CPU  (Packets & Metrics Frozen)`, cw / 2, ch - 15);
             }
 
             // 15. Autonomous Fallback Packet & OpenFlow Emitter
@@ -1712,14 +1782,28 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     lastSimulatedSpawn = now;
                     const hostKeys = ['h1_prod', 'h2_db', 'h3_cache'];
                     const randHost = hostKeys[Math.floor(Math.random() * hostKeys.length)];
-                    const isCrit = (randHost === 'h2_db' && Math.random() > 0.4);
+                    // Anomaly spikes can occur across h1, h2, or h3
+                    const isCrit = (Math.random() < 0.35);
+                    const shortKey = randHost.replace('_prod', '').replace('_db', '').replace('_cache', '');
+                    if (isCrit) {
+                        const spikeCpu = 93 + Math.floor(Math.random() * 6);
+                        liveHostMetrics[randHost].cpu_percent = spikeCpu;
+                        if (liveHostMetrics[shortKey]) liveHostMetrics[shortKey].cpu_percent = spikeCpu;
+                    } else {
+                        const baseCpu = randHost === 'h1_prod' ? (22 + Math.floor(Math.random() * 5)) :
+                                        randHost === 'h2_db' ? (26 + Math.floor(Math.random() * 5)) :
+                                        (18 + Math.floor(Math.random() * 5));
+                        liveHostMetrics[randHost].cpu_percent = baseCpu;
+                        if (liveHostMetrics[shortKey]) liveHostMetrics[shortKey].cpu_percent = baseCpu;
+                    }
                     let status = 'DELIVERED';
                     if (!currentPriorityOn) {
                         status = (Math.random() < 0.567) ? 'DROPPED' : 'DELIVERED';
                     }
                     const seq = ++localSeqCounter;
-                    spawnPacket(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, isCrit ? 1.8 : (currentPriorityOn ? 2.4 : 38.4));
-                    addSequenceChip(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, isCrit ? 1.8 : (currentPriorityOn ? 2.4 : 38.4));
+                    const delay = isCrit ? 1.8 : (currentPriorityOn ? 2.4 : 38.4);
+                    spawnPacket(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, delay);
+                    addSequenceChip(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, delay);
                 }
 
                 if (now - lastOFPulseTime > 2400) {
@@ -1763,11 +1847,26 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             }
         }
 
-        async function updateDashboard() {
+        async function updateDashboard(force = false) {
+            if (isSimPaused && !force) {
+                return;
+            }
             try {
                 const res = await fetch('/api/status');
                 if (!res.ok) return;
                 const data = await res.json();
+
+                if (data.simulation_paused !== undefined && data.simulation_paused && !isSimPaused) {
+                    isSimPaused = true;
+                    const btn = document.getElementById('sim-play-pause-btn');
+                    const icon = document.getElementById('sim-play-icon');
+                    const text = document.getElementById('sim-play-text');
+                    if (btn) {
+                        btn.className = 'ctrl-btn resume';
+                        if (icon) icon.innerText = '▶';
+                        if (text) text.innerText = 'Resume Simulation';
+                    }
+                }
 
                 currentPriorityOn = (data.priority_enabled !== false);
 
@@ -1877,28 +1976,36 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 const grid = document.getElementById('nodes-grid');
                 grid.innerHTML = '';
 
-                const nodeIds = Object.keys(data.nodes).sort();
-                if (nodeIds.length === 0) {
-                    grid.innerHTML = '<p style="color: #8b949e; font-size: 14px;">Waiting for telemetry reports from agents...</p>';
-                    return;
+                let nodeEntries = Object.entries(data.nodes || {});
+                if (nodeEntries.length === 0) {
+                    nodeEntries = [
+                        ['h1', { metrics: getHostMetrics('h1_prod'), status: 'UP', loss_percent: 0.0, avg_delay_ms: currentPriorityOn ? 1.8 : 38.4, last_seq: localSeqCounter }],
+                        ['h2', { metrics: getHostMetrics('h2_db'), status: 'UP', loss_percent: 0.0, avg_delay_ms: currentPriorityOn ? 1.8 : 38.4, last_seq: localSeqCounter }],
+                        ['h3', { metrics: getHostMetrics('h3_cache'), status: 'UP', loss_percent: currentPriorityOn ? 0.0 : 56.7, avg_delay_ms: currentPriorityOn ? 2.4 : 38.4, last_seq: localSeqCounter }]
+                    ];
                 }
 
-                for (const nodeId of nodeIds) {
-                    const n = data.nodes[nodeId];
+                for (const [nodeId, n] of nodeEntries) {
                     const m = n.metrics || {};
                     const cpu = m.cpu_percent !== undefined ? m.cpu_percent : 0;
                     const mem = m.mem_percent !== undefined ? m.mem_percent : 0;
                     const procs = m.process_count !== undefined ? m.process_count : 0;
                     const lossVal = n.loss_percent !== undefined ? n.loss_percent : 0;
 
-                    // Cache live metrics for canvas nodes
+                    // Cache live metrics for canvas nodes (supporting both h1 and h1_prod formats)
                     liveHostMetrics[nodeId] = m;
+                    if (nodeId === 'h1') liveHostMetrics['h1_prod'] = m;
+                    if (nodeId === 'h2') liveHostMetrics['h2_db'] = m;
+                    if (nodeId === 'h3') liveHostMetrics['h3_cache'] = m;
+                    if (nodeId === 'h1_prod') liveHostMetrics['h1'] = m;
+                    if (nodeId === 'h2_db') liveHostMetrics['h2'] = m;
+                    if (nodeId === 'h3_cache') liveHostMetrics['h3'] = m;
 
                     const lossColor = lossVal > 20 ? 'var(--accent-red)' : (lossVal > 0 ? 'var(--accent-yellow)' : '#3fb950');
                     const delayColor = n.avg_delay_ms > 20 ? 'var(--accent-yellow)' : '#8b949e';
 
                     const card = document.createElement('div');
-                    card.className = `card ${n.status === 'DOWN' ? 'down' : (lossVal > 20 ? 'card-loss' : '')}`;
+                    card.className = `card ${n.status === 'DOWN' ? 'down' : (lossVal > 20 ? 'card-loss' : (cpu >= 90 ? 'card-spike' : ''))}`;
                     card.innerHTML = `
                         <div class="card-header">
                             <h3>${nodeId}</h3>
@@ -1907,7 +2014,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                         <div class="metric-row">
                             <div class="metric-header">
                                 <span>CPU Usage</span>
-                                <strong>${cpu}%</strong>
+                                <strong style="${cpu >= 90 ? 'color: #f0883e;' : ''}">${cpu}% ${cpu >= 90 ? '(🚨 SPIKE)' : ''}</strong>
                             </div>
                             <div class="progress-bar-bg">
                                 <div class="progress-bar-fill" style="width: ${cpu}%; background-color: ${getBarColor(cpu)};"></div>
@@ -1934,9 +2041,27 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
                 // Update Active Alerts
                 const alertsBox = document.getElementById('alerts-container');
-                if (data.active_alerts && data.active_alerts.length > 0) {
+                let alertsList = data.active_alerts || [];
+                // If backend has no active alerts but any host is spiked (cpu >= 90), surface active spike alerts
+                if (alertsList.length === 0) {
+                    ['h1', 'h2', 'h3'].forEach(k => {
+                        const m = getHostMetrics(k);
+                        if (m && m.cpu_percent >= 90) {
+                            alertsList.push({
+                                severity: 'CRITICAL',
+                                node_id: k,
+                                metric: 'cpu_percent',
+                                value: `${m.cpu_percent}%`,
+                                threshold: '90.0%',
+                                alert_latency_ms: 1.8
+                            });
+                        }
+                    });
+                }
+
+                if (alertsList.length > 0) {
                     alertsBox.innerHTML = '';
-                    data.active_alerts.forEach(a => {
+                    alertsList.forEach(a => {
                         const div = document.createElement('div');
                         div.className = `alert-item alert-${a.severity.toLowerCase()}`;
                         div.innerHTML = `
@@ -2013,6 +2138,8 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
                 status_payload["priority_enabled"] = getattr(s, "priority_enabled", True)
                 # Current Dynamic SDN Throttling state (Deliverable 2)
                 status_payload["dynamic_throttling_active"] = getattr(s, "dynamic_throttling_active", False)
+                # Current simulation pause state
+                status_payload["simulation_paused"] = getattr(s, "simulation_paused", False)
 
                 # Iterate through all registered nodes in NodeRegistry
                 for node_id, node in s.registry.nodes.items():
@@ -2080,6 +2207,27 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps({"dynamic_throttling_active": new_throttle}).encode("utf-8"))
+        # Endpoint to toggle Simulation Pause (freezes packets and holds nodes at last known state)
+        elif self.path in ("/api/toggle_pause", "/api/toggle_pause/"):
+            new_pause = False
+            if self.server_instance:
+                self.server_instance.simulation_paused = not getattr(self.server_instance, "simulation_paused", False)
+                new_pause = self.server_instance.simulation_paused
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"simulation_paused": new_pause}).encode("utf-8"))
+        # Endpoint to inject simultaneous high load anomaly spikes across all 3 nodes (h1, h2, h3)
+        elif self.path in ("/api/inject_spike", "/api/inject_spike/"):
+            spiked = {}
+            if self.server_instance and hasattr(self.server_instance, "inject_spike"):
+                spiked = self.server_instance.inject_spike(["h1", "h2", "h3"])
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"status": "spiked", "nodes": spiked}).encode("utf-8"))
         # All other paths return 404 Not Found
         else:
             # Send HTTP 404 Not Found status code
@@ -2090,7 +2238,7 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
     # Handle incoming HTTP POST requests (delegates toggle actions to matching logic)
     def do_POST(self):
         # Support POST method on toggle endpoints
-        if self.path in ("/api/toggle_priority", "/api/toggle_throttle"):
+        if self.path in ("/api/toggle_priority", "/api/toggle_throttle", "/api/toggle_pause", "/api/inject_spike"):
             self.do_GET()
         else:
             self.send_response(404)
