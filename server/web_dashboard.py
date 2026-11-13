@@ -339,6 +339,169 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         .legend-dot.crit { background-color: #f0883e; box-shadow: 0 0 6px #f0883e; }
         .legend-dot.norm { background-color: #58a6ff; box-shadow: 0 0 6px #58a6ff; }
         .legend-dot.drop { background-color: #f85149; box-shadow: 0 0 6px #f85149; }
+        .legend-dot.ofctl { background-color: #a371f7; box-shadow: 0 0 6px #a371f7; }
+
+        .topo-title-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .topo-sim-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .ctrl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            color: var(--text-bright);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .ctrl-btn:hover {
+            transform: translateY(-1px);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .ctrl-btn.pause {
+            border-color: #d29922;
+            color: #d29922;
+            background-color: rgba(210, 153, 34, 0.15);
+        }
+        .ctrl-btn.resume {
+            border-color: #3fb950;
+            color: #3fb950;
+            background-color: rgba(63, 185, 80, 0.2);
+            box-shadow: 0 0 10px rgba(63, 185, 80, 0.4);
+            animation: pulse-resume 1.2s infinite alternate;
+        }
+        @keyframes pulse-resume {
+            from { box-shadow: 0 0 4px rgba(63, 185, 80, 0.2); }
+            to { box-shadow: 0 0 14px rgba(63, 185, 80, 0.7); }
+        }
+        .ctrl-btn.spike {
+            border-color: #f0883e;
+            color: #f0883e;
+            background-color: rgba(240, 136, 62, 0.15);
+        }
+        .ctrl-btn.spike:hover {
+            box-shadow: 0 0 10px rgba(240, 136, 62, 0.5);
+        }
+        .ctrl-btn.prio-on {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background-color: rgba(63, 185, 80, 0.15);
+        }
+        .ctrl-btn.prio-off {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+            background-color: rgba(248, 81, 73, 0.15);
+        }
+
+        /* Viva Presentation Walkthrough Bar */
+        .viva-stepper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #121820;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .viva-stepper-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #d2a8ff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 4px;
+        }
+        .viva-step-btn {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #8b949e;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .viva-step-btn:hover {
+            color: var(--text-bright);
+            border-color: #a371f7;
+        }
+        .viva-step-btn.active {
+            background-color: rgba(163, 113, 247, 0.2);
+            border-color: #a371f7;
+            color: #d2a8ff;
+            box-shadow: 0 0 8px rgba(163, 113, 247, 0.3);
+        }
+        .viva-card {
+            background: linear-gradient(135deg, rgba(22, 27, 34, 0.95), rgba(13, 17, 23, 0.95));
+            border: 1px solid rgba(163, 113, 247, 0.35);
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            line-height: 1.5;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .viva-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(163, 113, 247, 0.2);
+            padding-bottom: 4px;
+        }
+        .viva-card-title {
+            font-weight: 700;
+            color: #d2a8ff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .viva-card-rubric {
+            font-size: 11px;
+            font-weight: 700;
+            color: #3fb950;
+            background-color: rgba(63, 185, 80, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(63, 185, 80, 0.3);
+        }
+        .viva-points {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 8px;
+            color: var(--text-primary);
+        }
+        .viva-point {
+            background-color: rgba(33, 38, 45, 0.6);
+            border-left: 3px solid #a371f7;
+            padding: 5px 8px;
+            border-radius: 0 4px 4px 0;
+            font-size: 11.5px;
+        }
+        .viva-point strong { color: var(--text-bright); }
 
         .canvas-wrapper {
             position: relative;
@@ -352,7 +515,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         #topoCanvas {
             display: block;
             width: 100%;
-            height: 310px;
+            height: 530px;
         }
 
         .flow-ticker-bar {
@@ -482,23 +645,58 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <!-- Real-Time SDN OpenFlow Topology & Packet Flow Visualizer (Deliverable 2) -->
     <div class="topo-panel">
         <div class="topo-header">
-            <h3>
-                <span>🌐 OpenFlow 1.3 Topology & Real-Time Flow Pipeline</span>
-                <span id="topo-badge" class="d2-badge on">Priority Active (0.0% Loss)</span>
-            </h3>
+            <div class="topo-title-group">
+                <h3>
+                    <span>🌐 OpenFlow 1.3 Topology & Real-Time Flow Pipeline</span>
+                    <span id="topo-badge" class="d2-badge on">Priority Active (0.0% Loss)</span>
+                </h3>
+                <div class="topo-sim-controls">
+                    <button id="sim-play-pause-btn" class="ctrl-btn pause" onclick="toggleSimPause()" title="Pause simulation to explain packet states, flow rules, and queue allocation to examiners">
+                        <span id="sim-play-icon">⏸</span> <span id="sim-play-text">Pause Simulation</span>
+                    </button>
+                    <button id="sim-step-btn" class="ctrl-btn" onclick="stepSimulation()" title="Advance simulation by 1 discrete frame/packet while paused">
+                        <span>⏭</span> <span>Step Frame</span>
+                    </button>
+                    <button class="ctrl-btn spike" onclick="injectSpike()" title="Trigger Anomaly on h2 to demonstrate Priority 100 DSCP 46 EF QoS Rule Injection">
+                        <span>🚨</span> <span>Inject Spike (h2)</span>
+                    </button>
+                    <button id="sim-bulk-btn" class="ctrl-btn" onclick="toggleBulkTraffic()" title="Burst background cross-traffic to demonstrate bottleneck buffer saturation">
+                        <span>🌪️</span> <span>Burst Bulk Traffic</span>
+                    </button>
+                    <button id="toggle-prio-mini-btn" class="ctrl-btn prio-on" onclick="togglePriority()" title="Toggle SDN QoS Prioritization (Deliverable 2 vs Deliverable 1 FIFO Baseline)">
+                        <span id="mini-prio-icon">⚡</span> <span id="mini-prio-text">Priority: ON</span>
+                    </button>
+                </div>
+            </div>
             <div class="topo-meta">
                 <span class="topo-pill">Bottleneck: <strong>10 Mbps</strong></span>
                 <span class="topo-pill">Delivery Rate: <strong id="topo-delivery-rate" style="color: #3fb950;">100.0%</strong></span>
                 <span class="topo-pill">Dropped Packets: <strong id="topo-lost-count" style="color: var(--text-bright);">0</strong></span>
                 <div class="topo-legend">
+                    <span class="legend-item"><span class="legend-dot ofctl"></span> Ryu OF 1.3 Control</span>
                     <span class="legend-item"><span class="legend-dot crit"></span> Critical EF (Queue 2)</span>
                     <span class="legend-item"><span class="legend-dot norm"></span> Normal BE (Queue 1)</span>
                     <span class="legend-item"><span class="legend-dot drop"></span> ✕ Dropped (FIFO Tail-Drop)</span>
                 </div>
             </div>
         </div>
+
+        <!-- Viva Presentation Walkthrough Guide -->
+        <div class="viva-stepper">
+            <span class="viva-stepper-title">🎓 Viva Walkthrough:</span>
+            <button class="viva-step-btn active" id="viva-btn-arch" onclick="setVivaStep('arch')">1. Architecture (Ryu + Mininet)</button>
+            <button class="viva-step-btn" id="viva-btn-d1" onclick="setVivaStep('d1')">2. Deliverable 1: Ingestion & Telemetry</button>
+            <button class="viva-step-btn" id="viva-btn-d2" onclick="setVivaStep('d2')">3. Deliverable 2: SDN QoS & Rules</button>
+            <button class="viva-step-btn" id="viva-btn-loss" onclick="setVivaStep('loss')">4. Packet Loss Demo (FIFO vs QoS)</button>
+        </div>
+
+        <!-- Viva Explainer Card -->
+        <div id="viva-card" class="viva-card">
+            <!-- Dynamically populated by setVivaStep() -->
+        </div>
+
         <div class="canvas-wrapper">
-            <canvas id="topoCanvas" width="1000" height="310"></canvas>
+            <canvas id="topoCanvas" width="1000" height="530"></canvas>
         </div>
         <div class="flow-ticker-bar">
             <div class="ticker-label">
@@ -531,21 +729,28 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         // --- Global Pipeline State & Topology Engine ---
         let currentPriorityOn = true;
+        let isSimPaused = false;
+        let currentVivaStep = 'arch';
         let activePackets = [];
+        let openflowPulses = [];
         let particleBursts = [];
         let serverRipples = [];
         let floatingAlerts = [];
         let processedEventKeys = new Set();
         let recentSequenceChips = [];
         let lastSimulatedSpawn = 0;
+        let lastOFPulseTime = 0;
         let localSeqCounter = 100;
         let liveHostMetrics = {};
+        let switchRuleFlash = 0.0;
+        let ryuStatsFlash = 0.0;
+        let bulkTrafficBurstActive = false;
 
         // Canvas element and 2D rendering context
         const canvas = document.getElementById('topoCanvas');
         const ctx = canvas.getContext('2d');
         let cw = 1000;
-        let ch = 310;
+        let ch = 530;
 
         // Auto-scale canvas resolution to match retina high-DPI displays
         function resizeCanvas() {
@@ -553,7 +758,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             const rect = canvas.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
             cw = rect.width || 1000;
-            ch = 310;
+            ch = 530;
             canvas.width = cw * dpr;
             canvas.height = ch * dpr;
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -564,17 +769,173 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         // Calculate responsive node positions across the canvas width
         function getTopologyLayout() {
             const hostX = 110;
-            const switchX = Math.round(cw * 0.50);
+            const ryuX = Math.round(cw * 0.38);
+            const swX = Math.round(cw * 0.38);
             const serverX = Math.round(cw - 110);
+            const flowTableX = Math.round(cw * 0.74);
+            const tableWidth = Math.min(380, Math.max(260, Math.round(cw * 0.40)));
+
             return {
-                hosts: {
-                    h1_prod:  { x: hostX, y: 55,  name: 'h1_prod', title: 'h1 (Prod)', mode: 'Real PSUtil', color: '#58a6ff' },
-                    h2_db:    { x: hostX, y: 155, name: 'h2_db',   title: 'h2 (Database)', mode: 'Spike Pattern', color: '#f0883e' },
-                    h3_cache: { x: hostX, y: 255, name: 'h3_cache',title: 'h3 (Cache)', mode: 'Normal BE', color: '#3fb950' }
+                ryu: {
+                    x: ryuX,
+                    y: 56,
+                    w: 250,
+                    h: 62,
+                    title: '🧠 Ryu SDN Controller (c0)',
+                    sub: 'OpenFlow 1.3 | TCP 6653 | REST :8080'
                 },
-                sw:  { x: switchX, y: 155, w: 230, h: 175 },
-                srv: { x: serverX, y: 155, w: 140, h: 110 }
+                flowTable: {
+                    x: flowTableX,
+                    y: 56,
+                    w: tableWidth,
+                    h: 78
+                },
+                ctrlChannel: {
+                    fromX: ryuX,
+                    fromY: 87,
+                    toX: swX,
+                    toY: 175
+                },
+                hosts: {
+                    h1_prod:  { x: hostX, y: 220, name: 'h1_prod', title: 'h1 (Prod)', mode: 'Real PSUtil', ip: '10.0.0.1', color: '#58a6ff' },
+                    h2_db:    { x: hostX, y: 330, name: 'h2_db',   title: 'h2 (Database)', mode: 'Spike Pattern', ip: '10.0.0.2', color: '#f0883e' },
+                    h3_cache: { x: hostX, y: 440, name: 'h3_cache',title: 'h3 (Cache)', mode: 'Normal BE', ip: '10.0.0.3', color: '#3fb950' }
+                },
+                sw:  { x: swX, y: 330, w: 260, h: 310 },
+                srv: { x: serverX, y: 330, w: 145, h: 140 }
             };
+        }
+
+        // --- Viva Presentation Step Guide Data & Controller ---
+        const VIVA_STEPS_DATA = {
+            arch: {
+                title: '1. Mininet & Ryu SDN Architecture Overview',
+                rubric: 'Rubric: Topology & Architecture (4 Marks)',
+                points: [
+                    { label: 'Control Plane', desc: 'Ryu SDN Controller (c0) runs on TCP 6653 using OpenFlow 1.3 protocol. Completely decoupled from high-speed data plane.' },
+                    { label: 'Data Plane', desc: 'Mininet topology with 3 host agents (h1, h2, h3), OpenFlow switch s1, and centralized MonitorServer across 10 Mbps bottleneck.' },
+                    { label: 'Control Channel', desc: 'Ryu programs flow table rules in s1 proactively and monitors port stats reactively for dynamic traffic management.' }
+                ]
+            },
+            d1: {
+                title: '2. Deliverable 1: Telemetry Ingestion & Anomaly Detection',
+                rubric: 'Rubric: Ingestion & Failure Detection (8 Marks)',
+                points: [
+                    { label: 'Agent Collection', desc: 'Non-blocking psutil daemon samples CPU, memory, disk, network, and process count every 1.0s.' },
+                    { label: 'Custom UDP Protocol', desc: 'Lightweight JSON datagram (<1400B MTU-safe) with sequence numbers (seq) to track loss without TCP 3-way handshake overhead.' },
+                    { label: 'Anomaly Engine', desc: 'Threshold evaluator detects CPU > 90% or RAM > 85%, triggering CRITICAL alert with hysteresis window to prevent alert flap.' }
+                ]
+            },
+            d2: {
+                title: '3. Deliverable 2: OpenFlow 1.3 QoS & Dynamic Flow Control',
+                rubric: 'Rubric: OpenFlow QoS & Throttling (8 Marks)',
+                points: [
+                    { label: 'Traffic Marking', desc: 'Health agents mark critical packets with IP ToS 0xB8 (DSCP 46 Expedited Forwarding / EF); normal traffic marked DSCP 0 (BE).' },
+                    { label: 'Flow Table Rules', desc: 'Ryu installs Table 0 rule (Priority 100) matching ip_dscp=46 -> set_queue:2; normal UDP telemetry (Priority 50) -> set_queue:1.' },
+                    { label: 'Dynamic Throttling', desc: 'When port utilization >= 8.0 Mbps, Ryu installs Priority 80 rule demoting bulk cross-traffic to Queue 0 (capped 1-7M).' }
+                ]
+            },
+            loss: {
+                title: '4. Packet Loss Demonstration: Shared FIFO vs SDN QoS',
+                rubric: 'Rubric: Loss & Latency Contrast (6 Marks)',
+                points: [
+                    { label: 'Priority OFF (FIFO)', desc: 'Single shared buffer overflows during iPerf congestion -> 56.7% critical packet loss, 38.4ms delay due to tail-drop bufferbloat.' },
+                    { label: 'Priority ON (SDN QoS)', desc: 'Queue 2 isolation guarantees 5 Mbps dedicated bandwidth -> 0.0% loss and 1.8ms latency even under 9.5 Mbps congestion!' },
+                    { label: 'Delivery Guarantee', desc: 'Mission-critical telemetry and alerts bypass cross-traffic bursts, ensuring the remote monitor never misses a failure.' }
+                ]
+            }
+        };
+
+        function setVivaStep(stepKey) {
+            currentVivaStep = stepKey;
+            document.querySelectorAll('.viva-step-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`viva-btn-${stepKey}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const data = VIVA_STEPS_DATA[stepKey] || VIVA_STEPS_DATA.arch;
+            const card = document.getElementById('viva-card');
+            if (card) {
+                card.innerHTML = `
+                    <div class="viva-card-header">
+                        <span class="viva-card-title">📖 ${data.title}</span>
+                        <span class="viva-card-rubric">${data.rubric}</span>
+                    </div>
+                    <div class="viva-points">
+                        ${data.points.map(p => `
+                            <div class="viva-point">
+                                <strong>${p.label}:</strong> ${p.desc}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // --- Interactive Simulation Presentation Controls ---
+        function toggleSimPause() {
+            isSimPaused = !isSimPaused;
+            const btn = document.getElementById('sim-play-pause-btn');
+            const icon = document.getElementById('sim-play-icon');
+            const text = document.getElementById('sim-play-text');
+            if (btn) {
+                if (isSimPaused) {
+                    btn.className = 'ctrl-btn resume';
+                    if (icon) icon.innerText = '▶';
+                    if (text) text.innerText = 'Resume Simulation';
+                } else {
+                    btn.className = 'ctrl-btn pause';
+                    if (icon) icon.innerText = '⏸';
+                    if (text) text.innerText = 'Pause Simulation';
+                }
+            }
+        }
+
+        function stepSimulation() {
+            if (activePackets.length > 0) {
+                activePackets.forEach(p => { p.progress += 0.05; });
+            } else {
+                const seq = ++localSeqCounter;
+                spawnPacket('h2_db', seq, 'CRITICAL', 'DELIVERED', 1.8);
+                addSequenceChip('h2_db', seq, 'CRITICAL', 'DELIVERED', 1.8);
+            }
+            openflowPulses.forEach(p => { p.y += (p.dir === 'DOWN' ? 6 : -6); });
+        }
+
+        function injectSpike() {
+            const seq = ++localSeqCounter;
+            spawnPacket('h2_db', seq, 'CRITICAL', 'DELIVERED', 1.8);
+            addSequenceChip('h2_db', seq, 'CRITICAL', 'DELIVERED', 1.8);
+            spawnOFPulse('FLOW_MOD', 'DOWN', 'OFPFlowMod: Priority 100 DSCP 46 -> Q2', '#f0883e');
+        }
+
+        function toggleBulkTraffic() {
+            bulkTrafficBurstActive = !bulkTrafficBurstActive;
+            const btn = document.getElementById('sim-bulk-btn');
+            if (btn) {
+                btn.style.borderColor = bulkTrafficBurstActive ? '#f85149' : 'var(--border-color)';
+                btn.style.color = bulkTrafficBurstActive ? '#f85149' : 'var(--text-bright)';
+            }
+            for (let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    const seq = ++localSeqCounter;
+                    const isDrop = !currentPriorityOn;
+                    spawnPacket('h3_cache', seq, 'NORMAL', isDrop ? 'DROPPED' : 'DELIVERED', isDrop ? 38.4 : 2.5);
+                    addSequenceChip('h3_cache', seq, 'NORMAL', isDrop ? 'DROPPED' : 'DELIVERED', isDrop ? 38.4 : 2.5);
+                }, i * 200);
+            }
+        }
+
+        function spawnOFPulse(type, dir, label, color) {
+            openflowPulses.push({
+                y: dir === 'DOWN' ? 88 : 175,
+                targetY: dir === 'DOWN' ? 175 : 88,
+                speed: dir === 'DOWN' ? 1.6 : -1.6,
+                dir: dir,
+                type: type || 'FLOW_MOD',
+                label: label || 'OFPFlowMod',
+                color: color || '#a371f7',
+                alpha: 1.0
+            });
         }
 
         // Add outcome chip to the live sequence ticker ribbon
@@ -624,15 +985,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         // Trigger explosive tail-drop particle burst when packet is dropped in congested FIFO
         function triggerDropBurst(x, y, seq) {
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 14; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const spd = 1.0 + Math.random() * 3.5;
+                const spd = 1.0 + Math.random() * 4.0;
                 particleBursts.push({
                     x: x,
                     y: y,
                     vx: Math.cos(angle) * spd,
                     vy: Math.sin(angle) * spd,
-                    radius: 2 + Math.random() * 2.5,
+                    radius: 2 + Math.random() * 3,
                     alpha: 1.0,
                     color: Math.random() > 0.3 ? '#f85149' : '#ff7b72'
                 });
@@ -652,7 +1013,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 x: x,
                 y: y,
                 radius: 12,
-                maxRadius: 65,
+                maxRadius: 70,
                 alpha: 0.85
             });
         }
@@ -661,7 +1022,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         function renderLoop() {
             ctx.clearRect(0, 0, cw, ch);
             const layout = getTopologyLayout();
-            const { hosts, sw, srv } = layout;
+            const { ryu, flowTable, ctrlChannel, hosts, sw, srv } = layout;
 
             // 1. Draw subtle background blueprint grid dots
             ctx.fillStyle = '#161b22';
@@ -673,18 +1034,234 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 }
             }
 
-            // 2. Draw curved connection links (Hosts -> Switch)
-            const queueYEF = sw.y - 48;
-            const queueYNorm = sw.y;
-            const queueYBulk = sw.y + 48;
+            // 2. Draw Viva Focus Highlight Rings based on current active walkthrough step
+            ctx.save();
+            if (currentVivaStep === 'arch') {
+                // Focus on Complete Architecture (Ryu + Switch + Hosts + Server)
+                ctx.strokeStyle = 'rgba(163, 113, 247, 0.35)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([5, 5]);
+                // Control plane region
+                ctx.strokeRect(ryu.x - ryu.w / 2 - 10, ryu.y - ryu.h / 2 - 6, ryu.w + flowTable.w + 40, ryu.h + 12);
+                // Data plane region
+                ctx.strokeRect(30, 165, cw - 60, 335);
+                ctx.fillStyle = 'rgba(163, 113, 247, 0.8)';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText('[CONTROL PLANE: OpenFlow 1.3]', ryu.x - ryu.w / 2, ryu.y - ryu.h / 2 - 10);
+                ctx.fillText('[DATA PLANE: Mininet 10 Mbps Bottleneck]', 35, 180);
+                ctx.setLineDash([]);
+            } else if (currentVivaStep === 'd1') {
+                // Focus on Host agents & Monitor Server
+                ctx.strokeStyle = 'rgba(63, 185, 80, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(35, 175, 150, 315);
+                ctx.strokeRect(srv.x - srv.w / 2 - 8, srv.y - srv.h / 2 - 8, srv.w + 16, srv.h + 16);
+                ctx.fillStyle = '#3fb950';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('★ D1: psutil Host Agents (1.0s Interval)', 110, 170);
+                ctx.fillText('★ D1: UDP 5005 Ingestion Engine', srv.x, srv.y - srv.h / 2 - 14);
+                ctx.setLineDash([]);
+            } else if (currentVivaStep === 'd2') {
+                // Focus on Ryu, Flow Table, and Switch Queues
+                ctx.strokeStyle = 'rgba(88, 166, 255, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(ryu.x - ryu.w / 2 - 8, ryu.y - ryu.h / 2 - 8, ryu.w + 16, ryu.h + 16);
+                ctx.strokeRect(flowTable.x - flowTable.w / 2 - 8, flowTable.y - flowTable.h / 2 - 8, flowTable.w + 16, flowTable.h + 16);
+                ctx.strokeRect(sw.x - sw.w / 2 - 8, sw.y - sw.h / 2 - 8, sw.w + 16, sw.h + 16);
+                ctx.fillStyle = '#58a6ff';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('★ D2: Ryu OpenFlow 1.3 Controller (TCP 6653)', ryu.x, ryu.y - ryu.h / 2 - 12);
+                ctx.fillText('★ D2: Table 0 QoS Matching Rules', flowTable.x, flowTable.y - flowTable.h / 2 - 12);
+                ctx.fillText('★ D2: Linux HTB Queuing (Q2, Q1, Q0)', sw.x, sw.y - sw.h / 2 - 12);
+                ctx.setLineDash([]);
+            } else if (currentVivaStep === 'loss') {
+                // Focus on Bottleneck link & Drop Zone
+                ctx.strokeStyle = 'rgba(248, 81, 73, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 4]);
+                const linkStartX = sw.x + sw.w / 2 - 20;
+                const linkWidth = (srv.x - srv.w / 2) - linkStartX + 20;
+                ctx.strokeRect(linkStartX, sw.y - 45, linkWidth, 90);
+                ctx.fillStyle = '#ff7b72';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('★ RUBRIC PROOF: Tail-Drop Zone (56.7% Loss FIFO vs 0.0% QoS)', (linkStartX + linkStartX + linkWidth) / 2, sw.y - 52);
+                ctx.setLineDash([]);
+            }
+            ctx.restore();
+
+            // 3. Draw Ryu SDN Controller (c0) [Control Plane]
+            ctx.save();
+            ctx.fillStyle = '#161b22';
+            ctx.strokeStyle = ryuStatsFlash > 0 ? '#3fb950' : '#a371f7';
+            ctx.lineWidth = ryuStatsFlash > 0 ? 3 : 2;
+            if (ryuStatsFlash > 0) {
+                ctx.shadowColor = '#3fb950';
+                ctx.shadowBlur = 12 * ryuStatsFlash;
+                ryuStatsFlash -= 0.03;
+            }
+            ctx.beginPath();
+            ctx.roundRect(ryu.x - ryu.w / 2, ryu.y - ryu.h / 2, ryu.w, ryu.h, 8);
+            ctx.fill();
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Controller Status LED
+            const ledPulse = 0.5 + 0.5 * Math.sin(Date.now() / 300);
+            ctx.beginPath();
+            ctx.arc(ryu.x - ryu.w / 2 + 16, ryu.y - 12, 5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(63, 185, 80, ${0.7 + 0.3 * ledPulse})`;
+            ctx.shadowColor = '#3fb950';
+            ctx.shadowBlur = 6;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Controller Title
+            ctx.fillStyle = 'var(--text-bright)';
+            ctx.font = 'bold 12px system-ui';
+            ctx.textAlign = 'left';
+            ctx.fillText(ryu.title, ryu.x - ryu.w / 2 + 28, ryu.y - 8);
+
+            // Controller Subtitle
+            ctx.fillStyle = '#a371f7';
+            ctx.font = '10px monospace';
+            ctx.fillText(ryu.sub, ryu.x - ryu.w / 2 + 14, ryu.y + 10);
+
+            // Dynamic QoS status pill
+            ctx.fillStyle = 'rgba(163, 113, 247, 0.18)';
+            ctx.strokeStyle = 'rgba(163, 113, 247, 0.4)';
+            ctx.beginPath();
+            ctx.roundRect(ryu.x - ryu.w / 2 + 14, ryu.y + 16, ryu.w - 28, 14, 3);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#d2a8ff';
+            ctx.font = 'bold 9px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('● Active (OpenFlow 1.3 QoS Engine)', ryu.x, ryu.y + 26);
+            ctx.restore();
+
+            // 4. Draw Live OpenFlow 1.3 Flow Table 0
+            ctx.save();
+            ctx.fillStyle = '#161b22';
+            ctx.strokeStyle = currentPriorityOn ? 'rgba(88, 166, 255, 0.6)' : 'rgba(248, 81, 73, 0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(flowTable.x - flowTable.w / 2, flowTable.y - flowTable.h / 2, flowTable.w, flowTable.h, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            // Table Header Banner
+            ctx.fillStyle = '#0d1117';
+            ctx.beginPath();
+            ctx.roundRect(flowTable.x - flowTable.w / 2 + 1, flowTable.y - flowTable.h / 2 + 1, flowTable.w - 2, 20, [5, 5, 0, 0]);
+            ctx.fill();
+
+            ctx.fillStyle = currentPriorityOn ? '#58a6ff' : '#ff7b72';
+            ctx.font = 'bold 10px system-ui';
+            ctx.textAlign = 'left';
+            ctx.fillText('📋 Switch s1 - OpenFlow 1.3 Table 0 (Live Rules)', flowTable.x - flowTable.w / 2 + 8, flowTable.y - flowTable.h / 2 + 14);
+
+            // Flow Table Rows
+            const tLeft = flowTable.x - flowTable.w / 2 + 8;
+            if (currentPriorityOn) {
+                ctx.font = '9px monospace';
+                // Priority 100 Rule
+                ctx.fillStyle = '#f0883e';
+                ctx.fillText('Prio 100: ip_dscp=46 -> set_queue:2, out:4 (EF 5M min)', tLeft, flowTable.y - 5);
+                // Priority 80 Rule
+                ctx.fillStyle = '#d29922';
+                ctx.fillText('Prio 80:  proto=UDP (iPerf) -> set_queue:0, out:4 (Throttle)', tLeft, flowTable.y + 7);
+                // Priority 50 Rule
+                ctx.fillStyle = '#3fb950';
+                ctx.fillText('Prio 50:  tp_dst=5005 -> set_queue:1, out:4 (BE 3M min)', tLeft, flowTable.y + 19);
+                // Priority 0 Rule
+                ctx.fillStyle = '#58a6ff';
+                ctx.fillText('Prio 0:   match=* -> NORMAL (L2/L3 Learning)', tLeft, flowTable.y + 31);
+            } else {
+                ctx.font = '9.5px monospace';
+                ctx.fillStyle = '#f85149';
+                ctx.fillText('⚠️ QoS Rules Flushed: Single Shared FIFO Active', tLeft, flowTable.y);
+                ctx.fillStyle = '#ff7b72';
+                ctx.fillText('Prio 0: match=* -> output:4 (No Queue Isolation)', tLeft, flowTable.y + 14);
+                ctx.fillStyle = '#8b949e';
+                ctx.fillText('* All flows compete in unmanaged FIFO buffer *', tLeft, flowTable.y + 28);
+            }
+            ctx.restore();
+
+            // 5. Draw OpenFlow 1.3 Control Channel (Ryu -> Switch s1)
+            ctx.save();
+            const chX = ctrlChannel.fromX;
+            const chStartY = ctrlChannel.fromY;
+            const chEndY = ctrlChannel.toY;
+            ctx.beginPath();
+            ctx.moveTo(chX - 4, chStartY);
+            ctx.lineTo(chX - 4, chEndY);
+            ctx.moveTo(chX + 4, chStartY);
+            ctx.lineTo(chX + 4, chEndY);
+            ctx.strokeStyle = 'rgba(163, 113, 247, 0.45)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Label in middle of control channel
+            ctx.fillStyle = '#161b22';
+            ctx.fillRect(chX - 70, (chStartY + chEndY) / 2 - 9, 140, 18);
+            ctx.strokeStyle = 'rgba(163, 113, 247, 0.5)';
+            ctx.strokeRect(chX - 70, (chStartY + chEndY) / 2 - 9, 140, 18);
+            ctx.fillStyle = '#d2a8ff';
+            ctx.font = 'bold 8.5px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('OF 1.3 Control [TCP 6653]', chX, (chStartY + chEndY) / 2 + 3);
+
+            // Draw OpenFlow Message Pulses along control channel
+            for (let i = openflowPulses.length - 1; i >= 0; i--) {
+                const pulse = openflowPulses[i];
+                if (!isSimPaused) {
+                    pulse.y += pulse.speed;
+                }
+
+                ctx.fillStyle = pulse.color;
+                ctx.shadowColor = pulse.color;
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.roundRect(chX - 48, pulse.y - 8, 96, 16, 8);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 8px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(pulse.label.slice(0, 15), chX, pulse.y + 3);
+
+                // Arrival trigger
+                if (pulse.dir === 'DOWN' && pulse.y >= pulse.targetY) {
+                    switchRuleFlash = 1.0;
+                    openflowPulses.splice(i, 1);
+                } else if (pulse.dir === 'UP' && pulse.y <= pulse.targetY) {
+                    ryuStatsFlash = 1.0;
+                    openflowPulses.splice(i, 1);
+                }
+            }
+            ctx.restore();
+
+            // 6. Draw Curved Connection Links (Hosts -> Switch)
+            const queueYEF = 230;
+            const queueYNorm = 330;
+            const queueYBulk = 430;
 
             Object.keys(hosts).forEach(k => {
                 const h = hosts[k];
-                const destY = (k === 'h2_db' && currentPriorityOn) ? queueYEF : queueYNorm;
+                const destY = (k === 'h2_db' && currentPriorityOn) ? queueYEF : (k === 'h3_cache' && currentPriorityOn ? queueYBulk : queueYNorm);
                 ctx.beginPath();
                 ctx.moveTo(h.x + 55, h.y);
                 ctx.bezierCurveTo((h.x + sw.x) / 2, h.y, (h.x + sw.x) / 2, destY, sw.x - sw.w / 2, destY);
-                ctx.strokeStyle = 'rgba(48, 54, 61, 0.7)';
+                ctx.strokeStyle = 'rgba(48, 54, 61, 0.75)';
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
@@ -698,7 +1275,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.fill();
             });
 
-            // 3. Draw Bottleneck Link (Switch -> Server)
+            // 7. Draw Bottleneck Link (Switch -> Server)
             const linkStartX = sw.x + sw.w / 2;
             const linkEndX = srv.x - srv.w / 2;
             const linkMidX = (linkStartX + linkEndX) / 2;
@@ -732,20 +1309,25 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.fillText('⚠️ Bottleneck Saturated [FIFO Bloat: ~38ms]', linkMidX, sw.y - 12);
             }
 
-            // 4. Draw Host Nodes on the Left
+            // 8. Draw Host Nodes on Left
             Object.keys(hosts).forEach(k => {
                 const h = hosts[k];
                 const metrics = liveHostMetrics[k] || {};
-                const cpu = metrics.cpu_percent !== undefined ? metrics.cpu_percent : (k === 'h2_db' ? 92 : 24);
+                const cpu = metrics.cpu_percent !== undefined ? metrics.cpu_percent : (k === 'h2_db' ? 94 : 24);
 
                 // Host box
                 ctx.fillStyle = '#161b22';
                 ctx.strokeStyle = (k === 'h2_db' && cpu >= 90) ? '#f0883e' : '#30363d';
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth = (k === 'h2_db' && cpu >= 90) ? 2 : 1.5;
+                if (k === 'h2_db' && cpu >= 90) {
+                    ctx.shadowColor = '#f0883e';
+                    ctx.shadowBlur = 8;
+                }
                 ctx.beginPath();
                 ctx.roundRect(h.x - 55, h.y - 32, 110, 64, 6);
                 ctx.fill();
                 ctx.stroke();
+                ctx.shadowBlur = 0;
 
                 // Status LED
                 ctx.beginPath();
@@ -777,14 +1359,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
                 ctx.fillStyle = cpu >= 90 ? '#f0883e' : '#58a6ff';
                 ctx.font = 'bold 9px monospace';
-                ctx.fillText(`CPU: ${cpu}%`, h.x - 34, h.y + 19);
+                ctx.fillText(`CPU: ${cpu}% [${h.ip}]`, h.x - 38, h.y + 19);
             });
 
-            // 5. Draw SDN Switch (s1) & Queues in Center
+            // 9. Draw SDN Switch (s1) & Queues in Center
             ctx.fillStyle = '#161b22';
             ctx.strokeStyle = currentPriorityOn ? 'rgba(63, 185, 80, 0.8)' : 'rgba(248, 81, 73, 0.9)';
             ctx.lineWidth = 2;
-            if (!currentPriorityOn) {
+            if (switchRuleFlash > 0) {
+                ctx.shadowColor = '#58a6ff';
+                ctx.shadowBlur = 14 * switchRuleFlash;
+                switchRuleFlash -= 0.04;
+            } else if (!currentPriorityOn) {
                 // Hazard pulsing border on switch during FIFO saturation
                 const swPulse = 0.4 + 0.4 * Math.sin(Date.now() / 250);
                 ctx.shadowColor = 'rgba(248, 81, 73, 0.8)';
@@ -795,6 +1381,34 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             ctx.fill();
             ctx.stroke();
             ctx.shadowBlur = 0;
+
+            // Ingress and Egress Port Tags on Switch Border
+            ctx.fillStyle = '#0d1117';
+            ctx.strokeStyle = '#30363d';
+            // Ingress Port 1 (h1)
+            ctx.strokeRect(sw.x - sw.w / 2 - 14, 212, 14, 16);
+            ctx.fillRect(sw.x - sw.w / 2 - 14, 212, 14, 16);
+            ctx.fillStyle = '#58a6ff';
+            ctx.font = 'bold 8px monospace';
+            ctx.fillText('P1', sw.x - sw.w / 2 - 12, 224);
+            // Ingress Port 2 (h2)
+            ctx.fillStyle = '#0d1117';
+            ctx.strokeRect(sw.x - sw.w / 2 - 14, 322, 14, 16);
+            ctx.fillRect(sw.x - sw.w / 2 - 14, 322, 14, 16);
+            ctx.fillStyle = '#f0883e';
+            ctx.fillText('P2', sw.x - sw.w / 2 - 12, 334);
+            // Ingress Port 3 (h3)
+            ctx.fillStyle = '#0d1117';
+            ctx.strokeRect(sw.x - sw.w / 2 - 14, 432, 14, 16);
+            ctx.fillRect(sw.x - sw.w / 2 - 14, 432, 14, 16);
+            ctx.fillStyle = '#3fb950';
+            ctx.fillText('P3', sw.x - sw.w / 2 - 12, 444);
+            // Egress Port 4 (Bottleneck)
+            ctx.fillStyle = '#0d1117';
+            ctx.strokeRect(sw.x + sw.w / 2, 322, 14, 16);
+            ctx.fillRect(sw.x + sw.w / 2, 322, 14, 16);
+            ctx.fillStyle = '#58a6ff';
+            ctx.fillText('P4', sw.x + sw.w / 2 + 2, 334);
 
             // Switch Header Banner
             ctx.fillStyle = '#0d1117';
@@ -817,13 +1431,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.strokeStyle = '#f0883e';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.roundRect(sw.x - sw.w / 2 + 10, queueYEF - 16, sw.w - 20, 32, 4);
+                ctx.roundRect(sw.x - sw.w / 2 + 10, queueYEF - 20, sw.w - 20, 40, 4);
                 ctx.fill();
                 ctx.stroke();
                 ctx.fillStyle = '#f0883e';
                 ctx.font = 'bold 10px monospace';
                 ctx.textAlign = 'left';
-                ctx.fillText('Queue 2: EF Critical [5 Mbps Guaranteed]', sw.x - sw.w / 2 + 16, queueYEF - 2);
+                ctx.fillText('Queue 2: EF Critical [5 Mbps Guaranteed]', sw.x - sw.w / 2 + 16, queueYEF - 4);
                 ctx.fillStyle = '#8b949e';
                 ctx.font = '9px system-ui';
                 ctx.fillText('0% Loss Guarantee | DSCP 46', sw.x - sw.w / 2 + 16, queueYEF + 10);
@@ -832,12 +1446,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.fillStyle = 'rgba(63, 185, 80, 0.15)';
                 ctx.strokeStyle = '#3fb950';
                 ctx.beginPath();
-                ctx.roundRect(sw.x - sw.w / 2 + 10, queueYNorm - 16, sw.w - 20, 32, 4);
+                ctx.roundRect(sw.x - sw.w / 2 + 10, queueYNorm - 20, sw.w - 20, 40, 4);
                 ctx.fill();
                 ctx.stroke();
                 ctx.fillStyle = '#3fb950';
                 ctx.font = 'bold 10px monospace';
-                ctx.fillText('Queue 1: BE Normal [3 Mbps Min]', sw.x - sw.w / 2 + 16, queueYNorm - 2);
+                ctx.fillText('Queue 1: BE Normal [3 Mbps Min]', sw.x - sw.w / 2 + 16, queueYNorm - 4);
                 ctx.fillStyle = '#8b949e';
                 ctx.font = '9px system-ui';
                 ctx.fillText('Normal Health Telemetry | DSCP 0', sw.x - sw.w / 2 + 16, queueYNorm + 10);
@@ -846,12 +1460,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.fillStyle = 'rgba(139, 148, 158, 0.1)';
                 ctx.strokeStyle = '#484f58';
                 ctx.beginPath();
-                ctx.roundRect(sw.x - sw.w / 2 + 10, queueYBulk - 16, sw.w - 20, 32, 4);
+                ctx.roundRect(sw.x - sw.w / 2 + 10, queueYBulk - 20, sw.w - 20, 40, 4);
                 ctx.fill();
                 ctx.stroke();
                 ctx.fillStyle = '#8b949e';
                 ctx.font = 'bold 10px monospace';
-                ctx.fillText('Queue 0: Bulk Background [Capped 1-7M]', sw.x - sw.w / 2 + 16, queueYBulk - 2);
+                ctx.fillText('Queue 0: Bulk Background [Capped 1-7M]', sw.x - sw.w / 2 + 16, queueYBulk - 4);
                 ctx.font = '9px system-ui';
                 ctx.fillText('Best-effort cross-traffic isolation', sw.x - sw.w / 2 + 16, queueYBulk + 10);
             } else {
@@ -860,23 +1474,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.strokeStyle = '#f85149';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.roundRect(sw.x - sw.w / 2 + 12, sw.y - 50, sw.w - 24, 115, 6);
+                ctx.roundRect(sw.x - sw.w / 2 + 12, sw.y - 120, sw.w - 24, 250, 6);
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.fillStyle = '#ff7b72';
-                ctx.font = 'bold 11px system-ui';
+                ctx.font = 'bold 12px system-ui';
                 ctx.textAlign = 'center';
-                ctx.fillText('SHARED BEST-EFFORT FIFO QUEUE', sw.x, sw.y - 28);
+                ctx.fillText('SHARED BEST-EFFORT FIFO QUEUE', sw.x, sw.y - 75);
 
                 ctx.fillStyle = '#8b949e';
                 ctx.font = '10px system-ui';
-                ctx.fillText('All flows compete in a single buffer', sw.x, sw.y - 12);
+                ctx.fillText('All flows compete in a single unmanaged buffer', sw.x, sw.y - 55);
 
-                // Saturated Buffer Meter Bar (98% Full)
+                // Saturated Buffer Meter Bar (96% Full)
                 ctx.fillStyle = '#0d1117';
                 ctx.beginPath();
-                ctx.roundRect(sw.x - sw.w / 2 + 25, sw.y + 4, sw.w - 50, 18, 4);
+                ctx.roundRect(sw.x - sw.w / 2 + 25, sw.y - 30, sw.w - 50, 20, 4);
                 ctx.fill();
 
                 const bufferFillWidth = (sw.w - 54) * 0.96;
@@ -885,21 +1499,25 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 fillGrad.addColorStop(1, '#f85149');
                 ctx.fillStyle = fillGrad;
                 ctx.beginPath();
-                ctx.roundRect(sw.x - sw.w / 2 + 27, sw.y + 6, bufferFillWidth, 14, 3);
+                ctx.roundRect(sw.x - sw.w / 2 + 27, sw.y - 28, bufferFillWidth, 16, 3);
                 ctx.fill();
 
                 ctx.fillStyle = '#ffffff';
                 ctx.font = 'bold 9px monospace';
-                ctx.fillText('BUFFER 96% FULL [OVERFLOW]', sw.x, sw.y + 17);
+                ctx.fillText('BUFFER 96% FULL [OVERFLOW]', sw.x, sw.y - 16);
 
                 // Tail-drop warning tag
                 const flash = (Date.now() / 400) % 1.0 > 0.5;
                 ctx.fillStyle = flash ? '#f85149' : '#ff7b72';
-                ctx.font = 'bold 10px monospace';
-                ctx.fillText('✕ TAIL-DROP ACTIVE (~56.7% DROP RATE)', sw.x, sw.y + 45);
+                ctx.font = 'bold 11px monospace';
+                ctx.fillText('✕ TAIL-DROP ACTIVE (~56.7% DROP RATE)', sw.x, sw.y + 25);
+
+                ctx.fillStyle = '#8b949e';
+                ctx.font = '10px system-ui';
+                ctx.fillText('Queue Latency: +38.4 ms bufferbloat delay', sw.x, sw.y + 50);
             }
 
-            // 6. Draw Central Monitor Server on Right
+            // 10. Draw Central Monitor Server on Right
             ctx.fillStyle = '#161b22';
             ctx.strokeStyle = '#58a6ff';
             ctx.lineWidth = 1.5;
@@ -912,23 +1530,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             ctx.fillStyle = 'var(--text-bright)';
             ctx.font = 'bold 12px system-ui';
             ctx.textAlign = 'center';
-            ctx.fillText('🖥️ Monitor Server', srv.x, srv.y - 25);
+            ctx.fillText('🖥️ Monitor Server', srv.x, srv.y - 32);
 
             ctx.fillStyle = '#8b949e';
             ctx.font = '10px monospace';
-            ctx.fillText('UDP Port: 5005', srv.x, srv.y - 8);
+            ctx.fillText('UDP Port: 5005', srv.x, srv.y - 15);
+            ctx.fillText('IP: 10.0.0.4', srv.x, srv.y);
 
             // Ingestion status pill
             ctx.fillStyle = 'rgba(63, 185, 80, 0.2)';
             ctx.strokeStyle = '#3fb950';
             ctx.beginPath();
-            ctx.roundRect(srv.x - 55, srv.y + 10, 110, 22, 11);
+            ctx.roundRect(srv.x - 55, srv.y + 15, 110, 22, 11);
             ctx.fill();
             ctx.stroke();
 
             ctx.fillStyle = '#3fb950';
             ctx.font = 'bold 10px system-ui';
-            ctx.fillText('● Ingestion Live', srv.x, srv.y + 25);
+            ctx.fillText('● Ingestion Live', srv.x, srv.y + 30);
 
             // Draw Server Radar Ripples
             for (let i = serverRipples.length - 1; i >= 0; i--) {
@@ -938,20 +1557,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.strokeStyle = `rgba(63, 185, 80, ${rip.alpha})`;
                 ctx.lineWidth = 2;
                 ctx.stroke();
-                rip.radius += 1.6;
-                rip.alpha -= 0.025;
+                if (!isSimPaused) {
+                    rip.radius += 1.6;
+                    rip.alpha -= 0.025;
+                }
                 if (rip.alpha <= 0 || rip.radius >= rip.maxRadius) {
                     serverRipples.splice(i, 1);
                 }
             }
 
-            // 7. Update and Draw Moving Packets Along Paths
+            // 11. Update and Draw Moving Packets Along Paths
             for (let i = activePackets.length - 1; i >= 0; i--) {
                 const p = activePackets[i];
-                p.progress += p.speed;
+                if (!isSimPaused) {
+                    p.progress += p.speed;
+                }
 
                 const hostObj = hosts[p.nodeId] || hosts.h1_prod;
-                const destY = (p.isCrit && currentPriorityOn) ? queueYEF : queueYNorm;
+                const destY = (p.isCrit && currentPriorityOn) ? queueYEF : (p.nodeId === 'h3_cache' && currentPriorityOn ? queueYBulk : queueYNorm);
 
                 let px, py;
                 // Stage 1: Host to Switch Ingress (progress 0.0 -> 0.45)
@@ -1029,7 +1652,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 }
             }
 
-            // 8. Update and Draw Particle Bursts from Dropped Packets
+            // 12. Update and Draw Particle Bursts from Dropped Packets
             for (let i = particleBursts.length - 1; i >= 0; i--) {
                 const pt = particleBursts[i];
                 ctx.beginPath();
@@ -1039,13 +1662,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.fill();
                 ctx.globalAlpha = 1.0;
 
-                pt.x += pt.vx;
-                pt.y += pt.vy;
-                pt.alpha -= 0.035;
+                if (!isSimPaused) {
+                    pt.x += pt.vx;
+                    pt.y += pt.vy;
+                    pt.alpha -= 0.035;
+                }
                 if (pt.alpha <= 0) particleBursts.splice(i, 1);
             }
 
-            // 9. Update and Draw Floating Drop Alerts
+            // 13. Update and Draw Floating Drop Alerts
             for (let i = floatingAlerts.length - 1; i >= 0; i--) {
                 const fa = floatingAlerts[i];
                 ctx.fillStyle = `rgba(248, 81, 73, ${fa.alpha})`;
@@ -1056,26 +1681,55 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.fillText(fa.text, fa.x, fa.y);
                 ctx.shadowBlur = 0;
 
-                fa.y += fa.vy;
-                fa.alpha -= 0.02;
+                if (!isSimPaused) {
+                    fa.y += fa.vy;
+                    fa.alpha -= 0.02;
+                }
                 if (fa.alpha <= 0) floatingAlerts.splice(i, 1);
             }
 
-            // 10. Autonomous Fallback Packet Emitter
+            // 14. Simulation Paused Presentation Overlay Watermark
+            if (isSimPaused) {
+                ctx.fillStyle = 'rgba(13, 17, 23, 0.82)';
+                ctx.fillRect(cw / 2 - 200, ch - 42, 400, 30);
+                ctx.strokeStyle = '#d29922';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(cw / 2 - 200, ch - 42, 400, 30);
+                ctx.fillStyle = '#d29922';
+                ctx.font = 'bold 11.5px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText('⏸ SIMULATION PAUSED — PRESENTATION FREEZE MODE', cw / 2, ch - 26);
+                ctx.fillStyle = '#8b949e';
+                ctx.font = '9.5px system-ui';
+                ctx.fillText('Inspect packet positions, flow table rules, and queue state', cw / 2, ch - 15);
+            }
+
+            // 15. Autonomous Fallback Packet & OpenFlow Emitter
             // Keeps the pipeline active and demonstrating continuously even if polling is paused
             const now = Date.now();
-            if (now - lastSimulatedSpawn > 1100) {
-                lastSimulatedSpawn = now;
-                const hostKeys = ['h1_prod', 'h2_db', 'h3_cache'];
-                const randHost = hostKeys[Math.floor(Math.random() * hostKeys.length)];
-                const isCrit = (randHost === 'h2_db' && Math.random() > 0.4);
-                let status = 'DELIVERED';
-                if (!currentPriorityOn) {
-                    status = (Math.random() < 0.567) ? 'DROPPED' : 'DELIVERED';
+            if (!isSimPaused) {
+                if (now - lastSimulatedSpawn > 1100) {
+                    lastSimulatedSpawn = now;
+                    const hostKeys = ['h1_prod', 'h2_db', 'h3_cache'];
+                    const randHost = hostKeys[Math.floor(Math.random() * hostKeys.length)];
+                    const isCrit = (randHost === 'h2_db' && Math.random() > 0.4);
+                    let status = 'DELIVERED';
+                    if (!currentPriorityOn) {
+                        status = (Math.random() < 0.567) ? 'DROPPED' : 'DELIVERED';
+                    }
+                    const seq = ++localSeqCounter;
+                    spawnPacket(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, isCrit ? 1.8 : (currentPriorityOn ? 2.4 : 38.4));
+                    addSequenceChip(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, isCrit ? 1.8 : (currentPriorityOn ? 2.4 : 38.4));
                 }
-                const seq = ++localSeqCounter;
-                spawnPacket(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, isCrit ? 1.8 : (currentPriorityOn ? 2.4 : 38.4));
-                addSequenceChip(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, isCrit ? 1.8 : (currentPriorityOn ? 2.4 : 38.4));
+
+                if (now - lastOFPulseTime > 2400) {
+                    lastOFPulseTime = now;
+                    if (Math.random() > 0.45) {
+                        spawnOFPulse('FLOW_MOD', 'DOWN', 'OFPFlowMod: Priority 100 (EF 46)', '#f0883e');
+                    } else {
+                        spawnOFPulse('STATS_REQ', 'DOWN', 'OFPPortStatsRequest', '#58a6ff');
+                    }
+                }
             }
 
             requestAnimationFrame(renderLoop);
@@ -1087,6 +1741,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         // --- Dashboard REST API Polling & Real-Time Sync ---
         async function togglePriority() {
             try {
+                spawnOFPulse('FLOW_MOD', 'DOWN', currentPriorityOn ? 'OFPFlowMod: Delete QoS Rules' : 'OFPFlowMod: Install Queue 2/1/0', currentPriorityOn ? '#f85149' : '#3fb950');
                 const res = await fetch('/api/toggle_priority', { method: 'POST' });
                 if (res.ok) {
                     await updateDashboard();
@@ -1098,6 +1753,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         async function toggleThrottle() {
             try {
+                spawnOFPulse('FLOW_MOD', 'DOWN', 'OFPFlowMod: Prio 80 Throttle Bulk', '#d29922');
                 const res = await fetch('/api/toggle_throttle', { method: 'POST' });
                 if (res.ok) {
                     await updateDashboard();
@@ -1183,6 +1839,22 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     throttleStatus.innerHTML = '<strong style="color: #ff7b72;">ACTIVE (Priority 80 Rule Injected & Cross-Traffic Throttled to Queue 0)</strong>';
                 } else {
                     throttleStatus.innerHTML = '<span style="color: #3fb950;">Inactive (Port rate < 8 Mbps)</span>';
+                }
+
+                // Update Mini Priority Toggle in Topology Controls Toolbar
+                const miniPrioBtn = document.getElementById('toggle-prio-mini-btn');
+                const miniPrioIcon = document.getElementById('mini-prio-icon');
+                const miniPrioText = document.getElementById('mini-prio-text');
+                if (miniPrioBtn) {
+                    if (currentPriorityOn) {
+                        miniPrioBtn.className = 'ctrl-btn prio-on';
+                        if (miniPrioIcon) miniPrioIcon.innerText = '⚡';
+                        if (miniPrioText) miniPrioText.innerText = 'Priority: ON';
+                    } else {
+                        miniPrioBtn.className = 'ctrl-btn prio-off';
+                        if (miniPrioIcon) miniPrioIcon.innerText = '⚠️';
+                        if (miniPrioText) miniPrioText.innerText = 'Priority: OFF (FIFO)';
+                    }
                 }
 
                 // Synchronize real server packet events with the animated canvas
@@ -1281,6 +1953,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             }
         }
 
+        setVivaStep('arch');
         setInterval(updateDashboard, 1000);
         updateDashboard();
     </script>
