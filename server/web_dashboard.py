@@ -570,6 +570,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             font-weight: 700;
             box-shadow: 0 0 6px rgba(240, 136, 62, 0.3);
         }
+        .ticker-chip.bulk {
+            background-color: rgba(163, 113, 247, 0.2);
+            border-color: rgba(163, 113, 247, 0.6);
+            color: #d2a8ff;
+            font-weight: 600;
+        }
         .ticker-chip.dropped {
             background-color: rgba(248, 81, 73, 0.25);
             border-color: var(--accent-red);
@@ -741,7 +747,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         let floatingAlerts = [];
         let processedEventKeys = new Set();
         let recentSequenceChips = [];
-        let lastSimulatedSpawn = 0;
+        let lastBulkSpawn = 0;
+        let lastHealthSpawn = 0;
+        let lastSpikeCheck = 0;
+        let healthHostIndex = 0;
         let lastOFPulseTime = 0;
         let localSeqCounter = 100;
         let liveHostMetrics = {
@@ -993,16 +1002,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             bulkTrafficBurstActive = !bulkTrafficBurstActive;
             const btn = document.getElementById('sim-bulk-btn');
             if (btn) {
-                btn.style.borderColor = bulkTrafficBurstActive ? '#f85149' : 'var(--border-color)';
-                btn.style.color = bulkTrafficBurstActive ? '#f85149' : 'var(--text-bright)';
+                btn.style.borderColor = bulkTrafficBurstActive ? '#a371f7' : 'var(--border-color)';
+                btn.style.color = bulkTrafficBurstActive ? '#a371f7' : 'var(--text-bright)';
             }
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 5; i++) {
                 setTimeout(() => {
                     const seq = ++localSeqCounter;
-                    const isDrop = !currentPriorityOn;
-                    spawnPacket('h3_cache', seq, 'NORMAL', isDrop ? 'DROPPED' : 'DELIVERED', isDrop ? 38.4 : 2.5);
-                    addSequenceChip('h3_cache', seq, 'NORMAL', isDrop ? 'DROPPED' : 'DELIVERED', isDrop ? 38.4 : 2.5);
-                }, i * 200);
+                    const isDrop = !currentPriorityOn && Math.random() < 0.65;
+                    spawnPacket('h3_cache', seq, 'BULK', isDrop ? 'DROPPED' : 'DELIVERED', isDrop ? 42.0 : 2.8);
+                    addSequenceChip('h3_cache', seq, 'BULK', isDrop ? 'DROPPED' : 'DELIVERED', isDrop ? 42.0 : 2.8);
+                }, i * 150);
             }
         }
 
@@ -1037,30 +1046,38 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             container.innerHTML = recentSequenceChips.map(c => {
                 if (c.status === 'DROPPED') {
                     return `<span class="ticker-chip dropped" title="Packet #${c.seq} dropped by shared FIFO bottleneck buffer overflow">✕ MISSING #${c.seq} [${c.nodeId}] (FIFO Drop)</span>`;
-                } else if (c.priority === 'CRITICAL') {
+                } else if (c.priority === 'CRITICAL' || c.priority === 'WARNING') {
                     return `<span class="ticker-chip critical" title="Queue 2 Expedited Forwarding packet delivered with zero loss">★ #${c.seq} [${c.nodeId} EF] (${c.delayMs}ms)</span>`;
+                } else if (c.priority === 'BULK') {
+                    return `<span class="ticker-chip bulk" title="Queue 0 Bulk Background traffic delivered via isolated queue">⬡ #${c.seq} [${c.nodeId} Bulk Q0] (${c.delayMs}ms)</span>`;
                 } else {
-                    return `<span class="ticker-chip delivered" title="Normal telemetry packet delivered to monitor server">✓ #${c.seq} [${c.nodeId}] (${c.delayMs}ms)</span>`;
+                    return `<span class="ticker-chip delivered" title="Normal telemetry packet delivered to monitor server">✓ #${c.seq} [${c.nodeId} BE] (${c.delayMs}ms)</span>`;
                 }
             }).join('');
         }
 
         // Spawn an animated packet moving through the topology
         function spawnPacket(nodeId, seq, priority, status, delayMs) {
-            const isCrit = (priority === 'CRITICAL');
+            const isCrit = (priority === 'CRITICAL' || priority === 'WARNING');
+            const isBulk = (priority === 'BULK');
             const isDrop = (status === 'DROPPED');
+            let pktColor = '#58a6ff';
+            if (isCrit) pktColor = '#f0883e';
+            else if (isBulk) pktColor = '#a371f7';
+
             activePackets.push({
                 id: Math.random(),
                 nodeId: nodeId || 'h1_prod',
                 seq: seq || ++localSeqCounter,
                 priority: priority || 'NORMAL',
                 isCrit: isCrit,
+                isBulk: isBulk,
                 isDrop: isDrop,
-                delayMs: delayMs || (isCrit ? 1.8 : 2.5),
+                delayMs: delayMs || (isCrit ? 1.8 : (isBulk ? 2.8 : 2.5)),
                 progress: 0.0,
                 // Speed: when priority is off, surviving packets cross bottleneck slower (buffer bloat delay)
-                speed: isDrop ? 0.014 : (currentPriorityOn ? 0.016 : 0.011),
-                color: isCrit ? '#f0883e' : '#58a6ff'
+                speed: isDrop ? 0.014 : (currentPriorityOn ? (isCrit ? 0.018 : 0.016) : 0.011),
+                color: pktColor
             });
         }
 
@@ -1340,13 +1357,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 const h = hosts[k];
                 const metrics = getHostMetrics(k);
                 const cpu = metrics.cpu_percent !== undefined ? metrics.cpu_percent : 24;
-                const isHostSpiked = (cpu >= 90);
-                const destY = (isHostSpiked && currentPriorityOn) ? queueYEF : (k === 'h3_cache' && currentPriorityOn && !isHostSpiked ? queueYBulk : queueYNorm);
+                const isHostSpiked = (cpu >= 70);
+                const isBulkHost = (k === 'h3_cache' || k === 'h3');
+                const destY = currentPriorityOn
+                    ? (isHostSpiked ? queueYEF : (isBulkHost ? queueYBulk : queueYNorm))
+                    : queueYNorm;
                 ctx.beginPath();
                 ctx.moveTo(h.x + 55, h.y);
                 ctx.bezierCurveTo((h.x + sw.x) / 2, h.y, (h.x + sw.x) / 2, destY, sw.x - sw.w / 2, destY);
-                ctx.strokeStyle = isHostSpiked ? 'rgba(240, 136, 62, 0.75)' : 'rgba(48, 54, 61, 0.75)';
-                ctx.lineWidth = isHostSpiked ? 2.5 : 2;
+                if (isHostSpiked && currentPriorityOn) {
+                    ctx.strokeStyle = 'rgba(240, 136, 62, 0.85)';
+                    ctx.lineWidth = 2.5;
+                } else if (isBulkHost && currentPriorityOn) {
+                    ctx.strokeStyle = 'rgba(163, 113, 247, 0.75)';
+                    ctx.lineWidth = 2;
+                } else {
+                    ctx.strokeStyle = currentPriorityOn ? 'rgba(88, 166, 255, 0.6)' : 'rgba(48, 54, 61, 0.75)';
+                    ctx.lineWidth = 2;
+                }
                 ctx.stroke();
 
                 // Directional flow indicator pulses along host links
@@ -1354,8 +1382,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 const fx = (h.x + 55) + (sw.x - sw.w / 2 - (h.x + 55)) * flowPhase;
                 const fy = h.y + (destY - h.y) * flowPhase;
                 ctx.beginPath();
-                ctx.arc(fx, fy, isHostSpiked ? 3 : 2, 0, Math.PI * 2);
-                ctx.fillStyle = isHostSpiked ? '#f0883e' : h.color;
+                ctx.arc(fx, fy, isHostSpiked ? 3.5 : 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = (isHostSpiked && currentPriorityOn) ? '#f0883e' : ((isBulkHost && currentPriorityOn) ? '#a371f7' : h.color);
                 ctx.fill();
             });
 
@@ -1659,7 +1687,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 }
 
                 const hostObj = getHostObj(p.nodeId) || hosts.h1_prod;
-                const destY = (p.isCrit && currentPriorityOn) ? queueYEF : ((p.nodeId === 'h3_cache' || p.nodeId === 'h3') && currentPriorityOn ? queueYBulk : queueYNorm);
+                const isWarnOrCrit = (p.isCrit || p.priority === 'CRITICAL' || p.priority === 'WARNING');
+                const isBulk = (p.isBulk || p.priority === 'BULK');
+                const destY = currentPriorityOn
+                    ? (isWarnOrCrit ? queueYEF : (isBulk ? queueYBulk : queueYNorm))
+                    : queueYNorm;
 
                 let px, py;
                 // Stage 1: Host to Switch Ingress (progress 0.0 -> 0.45)
@@ -1704,8 +1736,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
                 // Draw Packet Body
                 ctx.save();
-                if (p.isCrit) {
-                    // Critical Alert Packet: Glowing Amber Diamond (DSCP 46 EF)
+                if (isWarnOrCrit) {
+                    // Critical/Warning Alert Packet: Glowing Amber Diamond (DSCP 46 EF)
                     ctx.translate(px, py);
                     ctx.rotate(Math.PI / 4);
                     ctx.fillStyle = '#f0883e';
@@ -1719,8 +1751,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     ctx.font = 'bold 9px monospace';
                     ctx.textAlign = 'center';
                     ctx.fillText(`#${p.seq} EF`, px, py - 9);
+                } else if (isBulk) {
+                    // Bulk Background Packet: Purple Circular Bead (Queue 0)
+                    ctx.beginPath();
+                    ctx.arc(px, py, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = (p.isDrop && p.progress > 0.4) ? '#f85149' : '#a371f7';
+                    ctx.shadowColor = (p.isDrop && p.progress > 0.4) ? '#f85149' : '#a371f7';
+                    ctx.shadowBlur = 8;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    // Sequence tag
+                    ctx.fillStyle = (p.isDrop && p.progress > 0.4) ? '#ff7b72' : '#d2a8ff';
+                    ctx.font = 'bold 9px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`#${p.seq} B`, px, py - 8);
                 } else {
-                    // Normal Packet: Cyan/Green Circular Bead
+                    // Normal Packet: Cyan/Green Circular Bead (Queue 1 BE)
                     ctx.beginPath();
                     ctx.arc(px, py, 5, 0, Math.PI * 2);
                     ctx.fillStyle = p.isDrop && p.progress > 0.4 ? '#f85149' : '#58a6ff';
@@ -1792,36 +1839,57 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 ctx.fillText(`h1: ${m1}% CPU  |  h2: ${m2}% CPU  |  h3: ${m3}% CPU  (Packets & Metrics Frozen)`, cw / 2, ch - 15);
             }
 
-            // 15. Autonomous Fallback Packet & OpenFlow Emitter
+            // 15. Autonomous Telemetry & Bulk Emitter
             // Keeps the pipeline active and demonstrating continuously even if polling is paused
             const now = Date.now();
             if (!isSimPaused) {
-                if (now - lastSimulatedSpawn > 1100) {
-                    lastSimulatedSpawn = now;
-                    const hostKeys = ['h1_prod', 'h2_db', 'h3_cache'];
-                    const randHost = hostKeys[Math.floor(Math.random() * hostKeys.length)];
-                    // Anomaly spikes can occur across h1, h2, or h3
-                    const isCrit = (Math.random() < 0.35);
-                    const shortKey = randHost.replace('_prod', '').replace('_db', '').replace('_cache', '');
-                    if (isCrit) {
-                        const spikeCpu = 93 + Math.floor(Math.random() * 6);
-                        liveHostMetrics[randHost].cpu_percent = spikeCpu;
-                        if (liveHostMetrics[shortKey]) liveHostMetrics[shortKey].cpu_percent = spikeCpu;
-                    } else {
-                        const baseCpu = randHost === 'h1_prod' ? (22 + Math.floor(Math.random() * 5)) :
-                                        randHost === 'h2_db' ? (26 + Math.floor(Math.random() * 5)) :
-                                        (18 + Math.floor(Math.random() * 5));
-                        liveHostMetrics[randHost].cpu_percent = baseCpu;
-                        if (liveHostMetrics[shortKey]) liveHostMetrics[shortKey].cpu_percent = baseCpu;
-                    }
+                // (A) Bulk background packets emitted every 0.5s (500ms) from h3_cache into Queue 0
+                if (now - lastBulkSpawn >= 500) {
+                    lastBulkSpawn = now;
+                    const seq = ++localSeqCounter;
                     let status = 'DELIVERED';
+                    let delay = currentPriorityOn ? 2.8 : 42.1;
                     if (!currentPriorityOn) {
-                        status = (Math.random() < 0.567) ? 'DROPPED' : 'DELIVERED';
+                        // Under Priority OFF (shared FIFO), bulk packets experience heavy tail-drop (~65%)
+                        status = (Math.random() < 0.65) ? 'DROPPED' : 'DELIVERED';
+                    }
+                    spawnPacket('h3_cache', seq, 'BULK', status, delay);
+                    addSequenceChip('h3_cache', seq, 'BULK', status, delay);
+                }
+
+                // (B) Health telemetry packets emitted every 1.0s (1000ms), cycling through h1_prod, h2_db, h3_cache
+                if (now - lastHealthSpawn >= 1000) {
+                    lastHealthSpawn = now;
+                    const hostKeys = ['h1_prod', 'h2_db', 'h3_cache'];
+                    const currentHost = hostKeys[healthHostIndex % hostKeys.length];
+                    healthHostIndex++;
+
+                    const metrics = getHostMetrics(currentHost);
+                    const cpu = metrics.cpu_percent !== undefined ? metrics.cpu_percent : 24;
+                    const isWarnOrCrit = (cpu >= 70);
+                    const priority = cpu >= 90 ? 'CRITICAL' : (cpu >= 70 ? 'WARNING' : 'NORMAL');
+
+                    let status = 'DELIVERED';
+                    let delay = isWarnOrCrit ? 1.8 : (currentPriorityOn ? 2.4 : 36.5);
+                    if (!currentPriorityOn) {
+                        // When priority is OFF, shared FIFO drops ~55% of all traffic due to bufferbloat
+                        status = (Math.random() < 0.55) ? 'DROPPED' : 'DELIVERED';
                     }
                     const seq = ++localSeqCounter;
-                    const delay = isCrit ? 1.8 : (currentPriorityOn ? 2.4 : 38.4);
-                    spawnPacket(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, delay);
-                    addSequenceChip(randHost, seq, isCrit ? 'CRITICAL' : 'NORMAL', status, delay);
+                    spawnPacket(currentHost, seq, priority, status, delay);
+                    addSequenceChip(currentHost, seq, priority, status, delay);
+                }
+
+                // (C) Periodic Anomaly Spike Fluctuations every 5s (if not manually injected)
+                if (now - lastSpikeCheck >= 5000) {
+                    lastSpikeCheck = now;
+                    const h1Metrics = getHostMetrics('h1_prod');
+                    if (h1Metrics.cpu_percent < 90) {
+                        // Realistic baseline telemetry fluctuations
+                        if (liveHostMetrics['h1_prod']) liveHostMetrics['h1_prod'].cpu_percent = 22 + Math.floor(Math.random() * 6);
+                        if (liveHostMetrics['h2_db']) liveHostMetrics['h2_db'].cpu_percent = 25 + Math.floor(Math.random() * 5);
+                        if (liveHostMetrics['h3_cache']) liveHostMetrics['h3_cache'].cpu_percent = 20 + Math.floor(Math.random() * 5);
+                    }
                 }
 
                 if (now - lastOFPulseTime > 2400) {
