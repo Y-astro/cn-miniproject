@@ -1990,12 +1990,50 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 const grid = document.getElementById('nodes-grid');
                 grid.innerHTML = '';
 
-                let nodeEntries = Object.entries(data.nodes || {});
+                // Map/merge any short (h1) and long (h1_prod) aliases into a single canonical entry
+                const rawNodes = data.nodes || {};
+                const mergedNodes = {};
+
+                const aliasGroups = [
+                    ['h1 (Prod Server)', ['h1_prod', 'h1']],
+                    ['h2 (Database)', ['h2_db', 'h2']],
+                    ['h3 (Cache Cluster)', ['h3_cache', 'h3']]
+                ];
+
+                const processedKeys = new Set();
+                for (const [title, aliases] of aliasGroups) {
+                    let chosenKey = null;
+                    for (const a of aliases) {
+                        if (rawNodes[a]) {
+                            if (!chosenKey) chosenKey = a;
+                            // If this alias is UP and chosenKey was DOWN, prefer the active UP one!
+                            if (rawNodes[a].status === 'UP' && rawNodes[chosenKey].status !== 'UP') {
+                                chosenKey = a;
+                            }
+                        }
+                    }
+                    if (chosenKey) {
+                        aliases.forEach(a => processedKeys.add(a));
+                        mergedNodes[chosenKey] = {
+                            ...rawNodes[chosenKey],
+                            displayTitle: title
+                        };
+                    }
+                }
+
+                // Add any other non-aliased nodes (e.g. scalable tests h4, h5)
+                for (const [k, v] of Object.entries(rawNodes)) {
+                    if (!processedKeys.has(k)) {
+                        mergedNodes[k] = { ...v, displayTitle: k };
+                    }
+                }
+
+                let nodeEntries = Object.entries(mergedNodes);
                 if (nodeEntries.length === 0) {
                     nodeEntries = [
-                        ['h1', { metrics: getHostMetrics('h1_prod'), status: 'UP', loss_percent: 0.0, avg_delay_ms: currentPriorityOn ? 1.8 : 38.4, last_seq: localSeqCounter }],
-                        ['h2', { metrics: getHostMetrics('h2_db'), status: 'UP', loss_percent: 0.0, avg_delay_ms: currentPriorityOn ? 1.8 : 38.4, last_seq: localSeqCounter }],
-                        ['h3', { metrics: getHostMetrics('h3_cache'), status: 'UP', loss_percent: currentPriorityOn ? 0.0 : 56.7, avg_delay_ms: currentPriorityOn ? 2.4 : 38.4, last_seq: localSeqCounter }]
+                        ['h1_prod', { metrics: getHostMetrics('h1_prod'), status: 'UP', loss_percent: 0.0, avg_delay_ms: currentPriorityOn ? 1.8 : 38.4, last_seq: localSeqCounter, displayTitle: 'h1 (Prod Server)' }],
+                        ['h2_db', { metrics: getHostMetrics('h2_db'), status: 'UP', loss_percent: 0.0, avg_delay_ms: currentPriorityOn ? 1.8 : 38.4, last_seq: localSeqCounter, displayTitle: 'h2 (Database)' }],
+                        ['h3_cache', { metrics: getHostMetrics('h3_cache'), status: 'UP', loss_percent: currentPriorityOn ? 0.0 : 56.7, avg_delay_ms: currentPriorityOn ? 2.4 : 38.4, last_seq: localSeqCounter, displayTitle: 'h3 (Cache Cluster)' }]
                     ];
                 }
 
@@ -2022,7 +2060,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                     card.className = `card ${n.status === 'DOWN' ? 'down' : (lossVal > 20 ? 'card-loss' : (cpu >= 90 ? 'card-spike' : ''))}`;
                     card.innerHTML = `
                         <div class="card-header">
-                            <h3>${nodeId}</h3>
+                            <h3>${n.displayTitle || nodeId}</h3>
                             <span class="status-tag status-${n.status.toLowerCase()}">${n.status}</span>
                         </div>
                         <div class="metric-row">
@@ -2243,7 +2281,7 @@ class DashboardHTTPHandler(http.server.BaseHTTPRequestHandler):
         elif self.path.split("?")[0] in ("/api/inject_spike", "/api/inject_spike/"):
             spiked = {}
             if self.server_instance and hasattr(self.server_instance, "inject_spike"):
-                spiked = self.server_instance.inject_spike(["h1", "h2", "h3"])
+                spiked = self.server_instance.inject_spike()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")

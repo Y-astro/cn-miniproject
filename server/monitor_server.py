@@ -581,10 +581,32 @@ class MonitorServer:
 
     # Method to inject controlled high-load anomaly spikes across nodes for viva presentation
     def inject_spike(self, node_ids: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Injects high-load critical anomaly spikes across nodes (default: h1, h2, h3)."""
+        """Injects high-load critical anomaly spikes across nodes (default: active nodes or h1, h2, h3)."""
         import time
         from server.node_registry import NodeState
-        targets = node_ids or ["h1", "h2", "h3"]
+
+        # If node_ids given, resolve against existing registry keys so we don't spawn duplicate ghost nodes
+        active_keys = set(self.registry.nodes.keys())
+        raw_targets = node_ids or ["h1", "h2", "h3"]
+        targets = []
+        for nid in raw_targets:
+            short = nid.split("_")[0]
+            long_name = f"{short}_prod" if short == "h1" else (f"{short}_db" if short == "h2" else (f"{short}_cache" if short == "h3" else nid))
+            if long_name in active_keys:
+                targets.append(long_name)
+                # Remove inactive ghost short alias if present
+                if short in self.registry.nodes and short != long_name and self.registry.nodes[short].status == "DOWN":
+                    del self.registry.nodes[short]
+            elif short in active_keys:
+                targets.append(short)
+                # Remove inactive ghost long alias if present
+                if long_name in self.registry.nodes and short != long_name and self.registry.nodes[long_name].status == "DOWN":
+                    del self.registry.nodes[long_name]
+            else:
+                # Neither exists yet, pick long if active nodes use long names, else short
+                prefer_long = any("_" in k for k in active_keys)
+                targets.append(long_name if prefer_long else nid)
+
         spiked_info = {}
         now = time.time()
         for idx, nid in enumerate(targets):
